@@ -21,7 +21,6 @@ bool keyS = false;
 bool keyD = false;
 
 bool fullScreen = false;
-int janelaX = 100, janelaY = 100;
 
 void atualizaCentroJanela(int w, int h)
 {

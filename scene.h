@@ -14,7 +14,6 @@ extern int centerX;
 extern int centerY;
 
 extern bool fullScreen;
-extern int janelaX, janelaY;
 
 extern bool ignoreWarp;
 extern bool firstMouse;
