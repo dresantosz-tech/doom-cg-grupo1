@@ -1,5 +1,6 @@
 #include <GL/glut.h>
 #include "core/window.h"
+#include "input/keystate.h"
 
 // Tamanho inicial
 int janelaW = 1920;
@@ -20,6 +21,10 @@ void atualizaCentroJanela(int w, int h)
 
 void altFullScreen()
 {
+
+    ignoreWarp = true;
+    firstMouse = true;
+
     if (!fullScreen)
     {
         glutFullScreen();
