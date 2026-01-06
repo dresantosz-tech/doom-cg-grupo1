@@ -25,7 +25,7 @@ static void reshapeCb(int w, int h)
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(60.0f, a, 1.0f, 100.0f);
+    gluPerspective(70.0, (double)w / (double)h, 0.1, 2000.0);
 
     glMatrixMode(GL_MODELVIEW);
 
