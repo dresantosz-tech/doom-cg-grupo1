@@ -1,54 +1,53 @@
-# DoomLike Makefile (Adaptado para Windows/MinGW)
+# DoomLike Makefile
+# - Compila .o em build/
+# - Linka o executável em build/DoomLike
+# - Copia assets/maps/shaders para dentro de build/ (build portátil)
+# - make run já prepara tudo e executa
 
-CXX      := g++
-# Flags comuns. Importante: Windows precisa de -static para embutir algumas libs ou você precisará das DLLs
-CXXFLAGS := -g -O0 -Wall -Wextra -Iinclude 
+CXX       := g++
+CXXFLAGS  := -g -O0 -Wall -Wextra -Iinclude
+LDFLAGS   :=
+LDLIBS    := -lGLEW -lGL -lGLU -lglut
 
-# Bibliotecas no Windows tem nomes diferentes
-# Certifique-se de ter instalado o GLEW e FreeGLUT no seu MinGW
-LDLIBS   := -lglew32 -lfreeglut -lopengl32 -lglu32
-
-TARGET   := DoomLike.exe
+TARGET    := DoomLike
 BUILD_DIR := build
 
 SRC_DIR   := src
 MAIN      := main.cpp
 
-# O comando 'shell find' não funciona bem no CMD do Windows. 
-# Vamos listar as pastas explicitamente com wildcard (mais seguro para Windows)
-SRCS := $(wildcard src/core/*.cpp) \
-        $(wildcard src/graphics/*.cpp) \
-        $(wildcard src/input/*.cpp) \
-        $(wildcard src/level/*.cpp) \
-        $(wildcard src/utils/*.cpp) \
-        $(MAIN)
+# Encontra todos os .cpp dentro de src (recursivo)
+SRCS      := $(shell find $(SRC_DIR) -name '*.cpp' | sort)
+SRCS      += $(MAIN)
 
-# Substitui .cpp por .o e ajusta o caminho para build/
-OBJS := $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(SRCS))
+# Converte paths em nomes de objetos dentro de build/
+OBJS      := $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(SRCS))
 
-.PHONY: all clean run dirs
+.PHONY: all clean run dirs stage
 
-all: $(BUILD_DIR)/$(TARGET)
+# Build padrão já gera build pronta para rodar/entregar
+all: $(BUILD_DIR)/$(TARGET) stage
 
 $(BUILD_DIR)/$(TARGET): dirs $(OBJS)
-	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LDLIBS)
+	$(CXX) $(LDFLAGS) $(OBJS) -o $@ $(LDLIBS)
 
-# Regra de compilação
+# Regra genérica: compila qualquer .cpp para build/.../.o
 $(BUILD_DIR)/%.o: %.cpp
-	@if not exist "$(dir $@)" mkdir "$(dir $@)"
+	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Cria diretório build e subdiretórios se não existirem (sintaxe Windows)
 dirs:
-	@if not exist "$(BUILD_DIR)" mkdir "$(BUILD_DIR)"
-	@if not exist "$(BUILD_DIR)\src\core" mkdir "$(BUILD_DIR)\src\core"
-	@if not exist "$(BUILD_DIR)\src\graphics" mkdir "$(BUILD_DIR)\src\graphics"
-	@if not exist "$(BUILD_DIR)\src\input" mkdir "$(BUILD_DIR)\src\input"
-	@if not exist "$(BUILD_DIR)\src\level" mkdir "$(BUILD_DIR)\src\level"
-	@if not exist "$(BUILD_DIR)\src\utils" mkdir "$(BUILD_DIR)\src\utils"
+	@mkdir -p $(BUILD_DIR)
 
+# Copia recursos para dentro de build/ (self-contained)
+stage: dirs
+	@rm -rf $(BUILD_DIR)/assets $(BUILD_DIR)/maps $(BUILD_DIR)/shaders
+	@cp -r assets  $(BUILD_DIR)/
+	@cp -r maps    $(BUILD_DIR)/
+	@cp -r shaders $(BUILD_DIR)/
+
+# Roda SEM depender do cwd externo
 run: all
-	$(BUILD_DIR)\$(TARGET)
+	cd $(BUILD_DIR) && ./$(TARGET)
 
 clean:
-	@if exist $(BUILD_DIR) rmdir /s /q $(BUILD_DIR)
+	rm -rf $(BUILD_DIR)
