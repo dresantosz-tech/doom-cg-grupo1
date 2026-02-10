@@ -3,6 +3,7 @@
 #include "graphics/shader.h"
 #include <cstdio>
 
+
 bool loadAssets(GameAssets &a)
 {
     a.texChao = carregaTextura("assets/181.png");
@@ -63,3 +64,4 @@ bool loadAssets(GameAssets &a)
     }
     return true;
 }
+

@@ -1,9 +1,0 @@
-# ===== Build artifacts =====
-build/
-*.o
-
-# ===== Executáveis =====
-DoomLike
-DoomLike.exe
-main
-main.exe
