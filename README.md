@@ -121,3 +121,53 @@ Cada **linha do arquivo** corresponde a uma linha do mapa, e **todas as linhas d
 1000090001
 1000000001
 1111111111
+
+## 👾 Inimigos no mapa
+
+Os inimigos são definidos diretamente no arquivo do mapa por letras.  
+Esses caracteres **não representam blocos sólidos**, servem apenas como ponto de spawn.
+
+| Caractere | Tipo de inimigo |
+|----------|----------------|
+| `J` | Inimigo tipo J |
+| `T` | Inimigo tipo T |
+| `M` | Inimigo tipo M |
+| `K` | Inimigo tipo K |
+| `G` | Inimigo tipo G |
+
+Após o carregamento do mapa, o caractere é convertido para piso e a entidade é criada separadamente.
+
+---
+
+## 🧰 Itens no mapa
+
+Os itens também são definidos diretamente no mapa e funcionam como pontos de spawn.
+
+| Caractere | Item | Descrição |
+|----------|-----|-----------|
+| `H` | Health | Recupera vida do jogador |
+| `A` | Ammo | Recupera munição |
+
+- não geram geometria,
+- não bloqueiam passagem,
+- não participam da colisão do cenário,
+- são renderizados como sprites (billboards).
+
+---
+
+## 🔍 Parâmetros globais do raycast (culling)
+
+```cpp
+static float gCullHFovDeg      = 170.0f;
+static float gCullNearTiles    = 2.0f;
+static float gCullMaxDistTiles = 20.0f;
+
+gCullHFovDeg
+Define o campo de visão horizontal (em graus) usado no culling. Objetos fora desse ângulo, no plano XZ, não são renderizados.
+
+gCullNearTiles
+Define uma zona próxima ao jogador (em tiles) onde o culling angular é desativado, garantindo que objetos muito próximos sempre sejam desenhados.
+
+gCullMaxDistTiles
+Define a distância máxima de renderização (em tiles). Objetos além desse raio não são renderizados. Se for 0, não há limite de distância.
+
