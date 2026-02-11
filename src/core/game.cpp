@@ -1,4 +1,7 @@
 #include "audio/audio_system.h"
+#include "graphics/hud.h"
+#include "graphics/menu.h"
+#include "graphics/fire_particles.h"
 #include "core/game.h"
 #include "utils/assets.h"
 #include "level/level.h"
@@ -18,17 +21,8 @@
 #include <vector>
 #include <cstdlib>
 
-// --- SISTEMA DE FOGO ---
-struct ParticulaFogo
-{
-    float x, y;    // Posição
-    float velY;    // Velocidade vertical
-    float vida;    // Vida (1.0 = nova, 0.0 = morta)
-    float tamanho; // Tamanho do quadrado
-    float r, g, b; // Cor
-};
-
-std::vector<ParticulaFogo> fogo; // Lista de partículas
+static FireSystem gFire;
+static HudTextures gHudTex;
 
 // --- VARIÁVEIS GLOBAIS ---
 GLuint texChao;
@@ -46,16 +40,8 @@ GLuint texEnemiesRage[5];
 GLuint texEnemiesDamage[5];
 GLuint texHealth;
 GLuint texAmmo;
-GLuint texGunHUD;
-GLuint texHudFundo;
 
-GLuint texGunDefault, texGunFire1, texGunFire2;
-GLuint texGunReload1, texGunReload2;
-
-GLuint texDamage;
 float damageAlpha = 0.0f; // Começa invisível
-
-GLuint texHealthOverlay;
 float healthAlpha = 0.0f;
 
 GLuint progSangue;
@@ -71,21 +57,6 @@ int currentAmmo = 12;        // Balas na arma
 int reserveAmmo = 25;        // Balas no bolso
 
 GameState currentState = MENU_INICIAL; // Começa no menu
-
-// Estados da animação
-enum WeaponState
-{
-    W_IDLE,
-    W_FIRE_1,
-    W_FIRE_2,
-    W_RETURN,
-
-    W_PUMP, // shotgun pump/cycle
-
-    W_RELOAD_1,
-    W_RELOAD_2,
-    W_RELOAD_3
-};
 
 WeaponState weaponState = W_IDLE;
 float weaponTimer = 0.0f;
@@ -387,15 +358,17 @@ bool gameInit(const char *mapPath)
 
     texSkydome = gAssets.texSkydome;
 
-    texGunDefault = gAssets.texGunDefault;
-    texGunFire1 = gAssets.texGunFire1;
-    texGunFire2 = gAssets.texGunFire2;
-    texGunReload1 = gAssets.texGunReload1;
-    texGunReload2 = gAssets.texGunReload2;
-    texGunHUD = gAssets.texGunHUD;
-    texHudFundo = gAssets.texHudFundo;
+    gHudTex.texHudFundo = gAssets.texHudFundo;
+    gHudTex.texGunHUD = gAssets.texGunHUD;
 
-    texDamage = gAssets.texDamage;
+    gHudTex.texGunDefault = gAssets.texGunDefault;
+    gHudTex.texGunFire1 = gAssets.texGunFire1;
+    gHudTex.texGunFire2 = gAssets.texGunFire2;
+    gHudTex.texGunReload1 = gAssets.texGunReload1;
+    gHudTex.texGunReload2 = gAssets.texGunReload2;
+
+    gHudTex.texDamage = gAssets.texDamage;
+    gHudTex.texHealthOverlay = gAssets.texHealthOverlay;
 
     for (int i = 0; i < 5; i++)
     {
@@ -404,7 +377,6 @@ bool gameInit(const char *mapPath)
         texEnemiesDamage[i] = gAssets.texEnemiesDamage[i];
     }
 
-    texHealthOverlay = gAssets.texHealthOverlay;
     texHealth = gAssets.texHealth;
     texAmmo = gAssets.texAmmo;
 
@@ -431,7 +403,6 @@ bool gameInit(const char *mapPath)
 // --- WEAPON ANIM ---
 void updateWeaponAnim(float dt)
 {
-    const float TIME_FRAME_1 = 0.05f;
     const float TIME_FRAME_2 = 0.12f;
     const float RELOAD_T2 = 0.85f;
     const float RELOAD_T3 = 0.25f;
@@ -507,485 +478,6 @@ void drawText(float x, float y, const char *text, float escala)
     glPopMatrix();
 }
 
-// --- ATUALIZA O FOGO (CRIA E MOVE) ---
-void atualizaFogo()
-{
-    // 1. CRIAR NOVAS PARTÍCULAS (Nascem no chão)
-    // Aumente 'novasParticulas' para ter mais fogo
-    int novasParticulas = 20;
-
-    for (int i = 0; i < novasParticulas; i++)
-    {
-        ParticulaFogo p;
-        p.x = (rand() % janelaW);               // Espalha na largura da tela
-        p.y = 0;                                // Nasce no chão
-        p.velY = 2.0f + ((rand() % 15) / 5.0f); // Sobe rápido
-        p.vida = 1.0f;                          // Vida cheia
-        p.tamanho = 15.0f + (rand() % 25);      // Tamanho variado
-
-        // Cor: Varia entre Vermelho e Laranja
-        p.r = 1.0f;
-        p.g = (rand() % 150) / 255.0f; // Um pouco de verde cria laranja/amarelo
-        p.b = 0.0f;
-
-        fogo.push_back(p);
-    }
-
-    // 2. MOVER E ENVELHECER
-    for (size_t i = 0; i < fogo.size(); i++)
-    {
-        fogo[i].y += fogo[i].velY;       // Sobe
-        fogo[i].vida -= 0.015f;          // Envelhece e some
-        fogo[i].x += ((rand() % 5) - 2); // Treme para os lados (efeito calor)
-        fogo[i].tamanho *= 0.98f;        // Diminui um pouco enquanto sobe
-
-        // Se morreu, remove da lista
-        if (fogo[i].vida <= 0.0f)
-        {
-            fogo.erase(fogo.begin() + i);
-            i--;
-        }
-    }
-}
-
-// --- DESENHA O FOGO (COM BRILHO) ---
-void desenhaFogo()
-{
-    glDisable(GL_TEXTURE_2D);
-
-    // O SEGREDO: Blending Aditivo (GL_ONE)
-    // As cores se somam: Vermelho + Vermelho = Amarelo Brilhante
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-    glBegin(GL_QUADS);
-    for (auto &p : fogo)
-    {
-        // Alfa baseada na vida (some suavemente)
-        glColor4f(p.r, p.g, p.b, p.vida * 0.6f);
-
-        float t = p.tamanho;
-        glVertex2f(p.x - t, p.y - t);
-        glVertex2f(p.x + t, p.y - t);
-        glVertex2f(p.x + t, p.y + t);
-        glVertex2f(p.x - t, p.y + t);
-    }
-    glEnd();
-
-    // Volta ao normal para não estragar o resto do jogo
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-}
-
-// --- BARRA ESTILO DOOM (PROPORÇÃO CORRIGIDA) ---
-void drawDoomBar()
-{
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
-
-    // Configurações para desenho 2D
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_CULL_FACE);
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    gluOrtho2D(0, janelaW, 0, janelaH);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    float hBar = janelaH * 0.10f;
-
-    // =========================================================
-    // 1. FUNDO DO HUD (PERSONALIZADO E CORRIGIDO)
-    // =========================================================
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, texHudFundo); // Usa a sua imagem (meu_hud.png)
-
-    // --- CORREÇÃO DE TEXTURA ESTICADA ---
-    // Configura a imagem para REPETIR (azulejo) em vez de esticar
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    // Ajuste este número para controlar quantas vezes a imagem repete
-    // Se ainda parecer esticada, aumente para 8.0 ou 10.0
-    float repeticaoX = 6.0f;
-    float repeticaoY = 1.0f;
-
-    glColor3f(1.0f, 1.0f, 1.0f); // Branco puro para manter as cores originais da imagem
-
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex2f(0, 0);
-    glTexCoord2f(repeticaoX, 0.0f);
-    glVertex2f(janelaW, 0);
-    glTexCoord2f(repeticaoX, repeticaoY);
-    glVertex2f(janelaW, hBar);
-    glTexCoord2f(0.0f, repeticaoY);
-    glVertex2f(0, hBar);
-    glEnd();
-    glDisable(GL_TEXTURE_2D);
-
-    // Bordas (Linhas decorativas)
-    glLineWidth(3.0f);
-    glColor3f(0.7f, 0.7f, 0.75f); // Cinza claro
-    glBegin(GL_LINES);
-    glVertex2f(0, hBar);
-    glVertex2f(janelaW, hBar);
-    glEnd();
-
-    glColor3f(0.2f, 0.2f, 0.25f); // Cinza escuro (Divisória central)
-    glBegin(GL_LINES);
-    glVertex2f(janelaW / 2.0f, 0);
-    glVertex2f(janelaW / 2.0f, hBar);
-    glEnd();
-
-    // Configuração de Fontes e Escalas
-    float scaleLbl = 0.0018f * hBar;
-    float scaleNum = 0.0035f * hBar;
-    float colLbl[3] = {1.0f, 0.8f, 0.5f}; // Dourado
-    float colNum[3] = {0.8f, 0.0f, 0.0f}; // Vermelho Sangue
-
-    // =========================================================
-    // 2. HEALTH (VIDA)
-    // =========================================================
-    float yLblHealth = hBar * 0.35f;
-    float xTextHealth = janelaW * 0.08f;
-    glColor3fv(colLbl);
-    glLineWidth(2.0f);
-    drawText(xTextHealth, yLblHealth, "HEALTH", scaleLbl);
-
-    float barH = hBar * 0.5f;
-    float barY = (hBar - barH) / 2.0f;
-    float barX = xTextHealth + (janelaW * 0.08f);
-    float barMaxW = (janelaW * 0.45f) - barX;
-
-    // Fundo preto da barra de vida
-    glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-    glBegin(GL_QUADS);
-    glVertex2f(barX, barY);
-    glVertex2f(barX + barMaxW, barY);
-    glVertex2f(barX + barMaxW, barY + barH);
-    glVertex2f(barX, barY + barH);
-    glEnd();
-
-    // Cálculo da cor baseada na vida
-    float porcentagem = (float)playerHealth / 100.0f;
-    if (porcentagem < 0.0f)
-        porcentagem = 0.0f;
-    if (porcentagem > 1.0f)
-        porcentagem = 1.0f;
-
-    if (porcentagem > 0.6f)
-        glColor3f(0.0f, 0.8f, 0.0f); // Verde
-    else if (porcentagem > 0.3f)
-        glColor3f(1.0f, 0.8f, 0.0f); // Amarelo
-    else
-        glColor3f(0.8f, 0.0f, 0.0f); // Vermelho
-
-    // Barra colorida preenchida
-    glBegin(GL_QUADS);
-    glVertex2f(barX, barY);
-    glVertex2f(barX + (barMaxW * porcentagem), barY);
-    glVertex2f(barX + (barMaxW * porcentagem), barY + barH);
-    glVertex2f(barX, barY + barH);
-    glEnd();
-
-    // =========================================================
-    // 3. ARMA PIXEL ART (SHOTGUN)
-    // =========================================================
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor3f(1.0f, 1.0f, 1.0f);
-
-    float iconSize = hBar * 1.5f;
-    float iconY = (hBar - iconSize) / 2.0f + (hBar * 0.1f);
-
-    // Usa a textura da Shotgun que carregámos
-    glBindTexture(GL_TEXTURE_2D, gAssets.texGunHUD);
-
-    // Garante que fique "pixelado" (Retro style)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    float weaponWidth = iconSize * 2.2f;
-    float xIconGun = (janelaW * 0.75f) - (weaponWidth / 2.0f);
-
-    glBegin(GL_QUADS);
-    glTexCoord2f(0, 1);
-    glVertex2f(xIconGun, iconY);
-    glTexCoord2f(1, 1);
-    glVertex2f(xIconGun + weaponWidth, iconY);
-    glTexCoord2f(1, 0);
-    glVertex2f(xIconGun + weaponWidth, iconY + iconSize);
-    glTexCoord2f(0, 0);
-    glVertex2f(xIconGun, iconY + iconSize);
-    glEnd();
-
-    glDisable(GL_BLEND);
-    glDisable(GL_TEXTURE_2D);
-
-    // =========================================================
-    // 4. TEXTOS DE MUNIÇÃO
-    // =========================================================
-    float xAmmoBlock = xIconGun + weaponWidth + 10.0f;
-    float yNum = hBar * 0.50f;
-    float deslocamentoNumero = 5.0f;
-    float xNumAdjusted = xAmmoBlock + deslocamentoNumero;
-
-    // Desenha o número da munição
-    glColor3fv(colNum);
-    glLineWidth(4.0f);
-    glPushMatrix();
-    glTranslatef(xNumAdjusted, yNum, 0);
-    glScalef(scaleNum, scaleNum, 1.0f);
-    {
-        std::string s = std::to_string(currentAmmo);
-        for (char c : s)
-            glutStrokeCharacter(GLUT_STROKE_MONO_ROMAN, c);
-    }
-    glPopMatrix();
-
-    // Desenha o rótulo "AMMO"
-    float yLblAmmo = hBar * 0.20f;
-    glColor3fv(colLbl);
-    glLineWidth(2.0f);
-    drawText(xAmmoBlock, yLblAmmo, "AMMO", scaleLbl);
-
-    // Restaura as matrizes e atributos originais
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopAttrib();
-}
-
-void drawWeaponHUD()
-{
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    gluOrtho2D(0, janelaW, 0, janelaH);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_LIGHTING);
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    GLuint currentTex = texGunDefault;
-    if (weaponState == W_FIRE_1 || weaponState == W_RETURN)
-        currentTex = texGunFire1;
-    else if (weaponState == W_FIRE_2)
-        currentTex = texGunFire2;
-    else if (weaponState == W_RELOAD_1 || weaponState == W_RELOAD_3)
-        currentTex = texGunReload1;
-    else if (weaponState == W_RELOAD_2)
-        currentTex = texGunReload2;
-
-    if (currentTex == 0)
-    {
-        glDisable(GL_BLEND);
-        glEnable(GL_LIGHTING);
-        glEnable(GL_DEPTH_TEST);
-        glMatrixMode(GL_PROJECTION);
-        glPopMatrix();
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
-        return;
-    }
-
-    glBindTexture(GL_TEXTURE_2D, currentTex);
-    glColor4f(1, 1, 1, 1);
-
-    float gunH = janelaH * 0.5f;
-    float gunW = gunH;
-    float x = (janelaW - gunW) / 2.0f;
-    float y = 0.0f;
-
-    if (weaponState != W_IDLE)
-    {
-        y -= 20.0f;
-        x += (rand() % 10 - 5);
-    }
-
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex2f(x, y);
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex2f(x + gunW, y);
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex2f(x + gunW, y + gunH);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex2f(x, y + gunH);
-    glEnd();
-
-    glColor4f(1, 1, 1, 1);
-    glDisable(GL_BLEND);
-    glEnable(GL_LIGHTING);
-    glEnable(GL_DEPTH_TEST);
-
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-}
-
-void drawDamageOverlay()
-{
-    if (damageAlpha <= 0.0f)
-        return;
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    gluOrtho2D(0, janelaW, 0, janelaH);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_LIGHTING);
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glBindTexture(GL_TEXTURE_2D, texDamage);
-    glColor4f(1.0f, 1.0f, 1.0f, damageAlpha);
-
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex2f(0, 0);
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex2f(janelaW, 0);
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex2f(janelaW, janelaH);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex2f(0, janelaH);
-    glEnd();
-
-    glColor4f(1, 1, 1, 1);
-    glDisable(GL_BLEND);
-    glEnable(GL_LIGHTING);
-    glEnable(GL_DEPTH_TEST);
-
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-}
-
-void drawHealthOverlay()
-{
-    if (healthAlpha <= 0.0f)
-        return;
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    gluOrtho2D(0, janelaW, 0, janelaH);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_LIGHTING);
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glBindTexture(GL_TEXTURE_2D, texHealthOverlay);
-    glColor4f(1.0f, 1.0f, 1.0f, healthAlpha);
-
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex2f(0, 0);
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex2f(janelaW, 0);
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex2f(janelaW, janelaH);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex2f(0, janelaH);
-    glEnd();
-
-    glColor4f(1, 1, 1, 1);
-    glDisable(GL_BLEND);
-    glEnable(GL_LIGHTING);
-    glEnable(GL_DEPTH_TEST);
-
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-}
-
-static bool isLavaTile(int tx, int tz)
-{
-    const auto &data = gLevel.map.data();
-    if (tz < 0 || tz >= (int)data.size())
-        return false;
-    if (tx < 0 || tx >= (int)data[tz].size())
-        return false;
-    return data[tz][tx] == 'L';
-}
-
-static bool nearestLava(float px, float pz, float &outX, float &outZ, float &outDist)
-{
-    float tile = gLevel.metrics.tile;
-    float offX = gLevel.metrics.offsetX;
-    float offZ = gLevel.metrics.offsetZ;
-
-    int ptx = (int)((px - offX) / tile);
-    int ptz = (int)((pz - offZ) / tile);
-
-    const int R = 10;
-    bool found = false;
-    float bestD2 = 1e30f;
-    float bestX = 0, bestZ = 0;
-
-    for (int dz = -R; dz <= R; ++dz)
-    {
-        for (int dx = -R; dx <= R; ++dx)
-        {
-            int tx = ptx + dx;
-            int tz = ptz + dz;
-            if (!isLavaTile(tx, tz))
-                continue;
-
-            float cx = offX + (tx + 0.5f) * tile;
-            float cz = offZ + (tz + 0.5f) * tile;
-
-            float ddx = cx - px;
-            float ddz = cz - pz;
-            float d2 = ddx * ddx + ddz * ddz;
-
-            if (d2 < bestD2)
-            {
-                bestD2 = d2;
-                bestX = cx;
-                bestZ = cz;
-                found = true;
-            }
-        }
-    }
-
-    if (!found)
-        return false;
-
-    outX = bestX;
-    outZ = bestZ;
-    outDist = std::sqrt(bestD2);
-    return true;
-}
-
 // Reinicia o jogo
 void gameReset()
 {
@@ -1005,173 +497,16 @@ void gameReset()
     applySpawn(gLevel, camX, camZ);
 }
 
-// Desenha a mira
-void drawCrosshair()
-{
-    glPushAttrib(GL_ENABLE_BIT);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_TEXTURE_2D);
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    gluOrtho2D(0, janelaW, 0, janelaH);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    glColor3f(0.0f, 1.0f, 0.0f); // Mira Verde
-    glLineWidth(2.0f);
-
-    float cx = janelaW / 2.0f;
-    float cy = janelaH / 2.0f;
-    float size = 10.0f;
-
-    glBegin(GL_LINES);
-    glVertex2f(cx - size, cy);
-    glVertex2f(cx + size, cy);
-    glVertex2f(cx, cy - size);
-    glVertex2f(cx, cy + size);
-    glEnd();
-
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopAttrib();
-}
-
-// --- MENU GENÉRICO / GAME OVER ---
-void drawMenuScreen(std::string title, std::string subTitle)
-{
-
-    // 1. ATUALIZA A ANIMAÇÃO DO FOGO (Chama todo frame)
-    atualizaFogo();
-
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
-
-    // ZONA DE SEGURANÇA
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_FOG);
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_BLEND);
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    gluOrtho2D(0, janelaW, 0, janelaH);
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    // 2. FUNDO (Degradê Infernal)
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glBegin(GL_QUADS);
-    glColor4f(0.5f, 0.0f, 0.0f, 1.0f);
-    glVertex2f(0, janelaH); // Topo vermelho
-    glColor4f(0.5f, 0.0f, 0.0f, 1.0f);
-    glVertex2f(janelaW, janelaH);
-    glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-    glVertex2f(janelaW, 0); // Base preta
-    glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-    glVertex2f(0, 0);
-    glEnd();
-
-    // 3. DESENHA O FOGO (ANTES DO TEXTO PARA FICAR NO FUNDO)
-    desenhaFogo();
-
-    glDisable(GL_BLEND);
-
-    // 4. TÍTULO - VERSÃO GIGANTE E GROSSA
-
-    // Configurações de Tamanho
-    float scaleX = 1.0f; // Alargado horizontalmente
-    float scaleY = 1.0f; // Altura normal
-
-    // Medir largura base do texto
-    float rawWidth = 0;
-    for (char c : title)
-        rawWidth += glutStrokeWidth(GLUT_STROKE_ROMAN, c);
-
-    float titleW = rawWidth * scaleX;
-    float xBase = (janelaW - titleW) / 2.0f;
-    float yBase = (janelaH / 2.0f) + 40.0f;
-
-    // Função local para desenhar camadas grossas
-    auto drawThickLayer = [&](float x, float y, float spread, float r, float g, float b)
-    {
-        glColor3f(r, g, b);
-        for (float dy = -spread; dy <= spread; dy += 1.5f)
-        {
-            for (float dx = -spread; dx <= spread; dx += 1.5f)
-            {
-                glPushMatrix();
-                glTranslatef(x + dx, y + dy, 0);
-                glScalef(scaleX, scaleY, 1);
-                for (char c : title)
-                    glutStrokeCharacter(GLUT_STROKE_ROMAN, c);
-                glPopMatrix();
-            }
-        }
-    };
-
-    // CAMADA 1: Sombra
-    drawThickLayer(xBase + 10.0f, yBase - 10.0f, 4.0f, 0.0f, 0.0f, 0.0f);
-
-    // CAMADA 2: Corpo
-    drawThickLayer(xBase + 5.0f, yBase - 5.0f, 3.0f, 0.5f, 0.0f, 0.0f);
-
-    // CAMADA 3: Frente
-    drawThickLayer(xBase, yBase, 1.5f, 1.0f, 0.1f, 0.1f);
-
-    // 5. SUBTÍTULO
-    float scaleSub = 0.22f;
-    glLineWidth(3.0f);
-
-    float wSub = 0;
-    for (char c : subTitle)
-        wSub += glutStrokeWidth(GLUT_STROKE_ROMAN, c);
-    wSub *= scaleSub;
-    float xSub = (janelaW - wSub) / 2.0f;
-    float ySub = (janelaH / 2.0f) - 90.0f;
-
-    // Pisca Amarelo/Branco
-    if ((int)(tempo * 3) % 2 == 0)
-        glColor3f(1, 1, 1);
-    else
-        glColor3f(1, 1, 0);
-
-    for (float d = 0; d <= 1.0f; d += 1.0f)
-    {
-        glPushMatrix();
-        glTranslatef(xSub + d, ySub - d, 0);
-        glScalef(scaleSub, scaleSub, 1);
-        for (char c : subTitle)
-            glutStrokeCharacter(GLUT_STROKE_ROMAN, c);
-        glPopMatrix();
-    }
-
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopAttrib();
-}
-
 void gameUpdate(float dt)
 {
+    tempo += dt;
+
     // 1. SE NÃO ESTIVER JOGANDO, NÃO RODA A LÓGICA DO JOGO
     if (currentState != JOGANDO)
     {
         return;
     }
 
-    tempo += dt;
     atualizaMovimento();
 
     AudioListener L;
@@ -1202,8 +537,7 @@ void gameUpdate(float dt)
 
     updateEntities(dt);
     updateWeaponAnim(dt);
-  
-    
+
     // 3. CHECAGEM DE GAME OVER
     if (playerHealth <= 0)
     {
@@ -1336,62 +670,59 @@ void drawPauseMenu()
     glPopAttrib();
 }
 
-// FUNÇÃO PRINCIPAL DE DESENHO
+// FUNÇÃO PRINCIPAL DE DESENHO (REFATORADA: usa menuRender / pauseMenuRender / hudRenderAll)
 void gameRender()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // Monta o estado do HUD a partir das variáveis globais do jogo
+    HudState hs;
+    hs.playerHealth = playerHealth;
+    hs.currentAmmo = currentAmmo;
+    hs.reserveAmmo = reserveAmmo;
+    hs.damageAlpha = damageAlpha;
+    hs.healthAlpha = healthAlpha;
+    hs.weaponState = (WeaponState)weaponState; // se seu weaponState global já for WeaponState, pode remover o cast
+
     // --- ESTADO: MENU INICIAL ---
     if (currentState == MENU_INICIAL)
     {
-        drawMenuScreen("DOOM LIKE", "Pressione ENTER para Jogar");
+        // menuRender já cuida do fogo (update + render)
+        menuRender(janelaW, janelaH, tempo, gFire, "DOOM LIKE", "Pressione ENTER para Jogar");
     }
     // --- ESTADO: GAME OVER ---
     else if (currentState == GAME_OVER)
     {
-        // No Game Over, desenhamos o fundo 3D estático para ficar bonito
+        // Fundo 3D congelado
         drawWorld3D();
-        drawDamageOverlay();
 
-        // Mantém a barra visível no Game Over
-        drawDoomBar();
+        // HUD mínimo no game over: só barra + overlays (sem arma e sem mira)
+        hudRenderAll(janelaW, janelaH, gHudTex, hs, false, false, true);
 
-        drawMenuScreen("GAME OVER", "Pressione ENTER para Reiniciar");
+        // Tela do game over por cima (com fogo)
+        menuRender(janelaW, janelaH, tempo, gFire, "GAME OVER", "Pressione ENTER para Reiniciar");
     }
     // --- ESTADO: PAUSADO ---
     else if (currentState == PAUSADO)
     {
-        // 1. Desenha o jogo congelado no fundo
+        // 1) Mundo 3D congelado
         drawWorld3D();
 
-        // 2. Desenha o HUD
-        glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-        drawWeaponHUD();
+        // 2) HUD normal (arma + barra + mira + overlays)
+        hudRenderAll(janelaW, janelaH, gHudTex, hs, true, true, true);
 
-        // Desenha a barra
-        drawDoomBar();
-
-        glPopAttrib();
-
-        // 3. Desenha o menu escuro por cima
-        drawPauseMenu();
+        // 3) Menu escuro por cima
+        pauseMenuRender(janelaW, janelaH, tempo);
     }
     // --- ESTADO: JOGANDO ---
-    else
+    else // JOGANDO
     {
-        // 1. Mundo 3D
+        // 1) Mundo 3D
         drawWorld3D();
 
-        // 2. HUD (Arma, Vida, Mira, Sangue)
-        glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-        drawWeaponHUD();
-
-        // Desenha a barra clássica de novo!
-        drawDoomBar();
-
-        drawCrosshair();
-        drawDamageOverlay();
-        glPopAttrib();
+        // 2) HUD completo
+        hudRenderAll(janelaW, janelaH, gHudTex, hs, true, true, true);
+        printf("HUD gun default tex = %u\n", gHudTex.texGunDefault);
     }
 
     glutSwapBuffers();
