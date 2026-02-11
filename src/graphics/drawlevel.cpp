@@ -1,35 +1,11 @@
 #include <GL/glew.h>
 #include <GL/glut.h>
 #include <cmath>
+#include "core/game_state.h"
 #include "graphics/drawlevel.h"
-#include "core/camera.h"
-#include "core/entities.h"
 #include "level/levelmetrics.h"
 #include "utils/utils.h"
 #include <cstdio>
-
-extern GLuint texParede;
-extern GLuint texParedeInterna;
-extern GLuint texLava;
-extern GLuint texSangue;
-extern GLuint texChao;
-extern GLuint texChaoInterno;
-extern GLuint texTeto;
-
-// Transformando em Arrays para suportar múltiplos inimigos ---
-extern GLuint texEnemies[5];
-extern GLuint texEnemiesRage[5];
-extern GLuint texEnemiesDamage[5];
-// -----------------------------------------------------------------------------
-
-extern GLuint texHealth;
-extern GLuint texAmmo;
-
-extern GLuint progLava;
-extern GLuint progSangue;
-
-// Controle de tempo
-extern float tempo;
 
 // =====================
 // CONFIG / CONSTANTES
@@ -144,14 +120,14 @@ static void setIndoorLampAt(float x, float z, float intensity)
     glLightfv(GL_LIGHT1, GL_AMBIENT, amb);
 }
 
-static void beginIndoor(float wx, float wz)
+static void beginIndoor(float wx, float wz, float time)
 {
     glDisable(GL_LIGHT0);
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, kAmbientIndoor);
 
     glEnable(GL_LIGHT1);
 
-    float f = flickerFluorescente(tempo);
+    float f = flickerFluorescente(time);
     float intensity = 1.2f * f;
 
     setIndoorLampAt(wx, wz, intensity);
@@ -213,7 +189,7 @@ static void desenhaTileChao(float x, float z, GLuint texChaoX, bool temTeto)
 
     if (temTeto)
     {
-        glBindTexture(GL_TEXTURE_2D, texTeto);
+        glBindTexture(GL_TEXTURE_2D, texChaoX);
         desenhaQuadTeto(x, z, TILE, 2.0f);
     }
 }
@@ -308,22 +284,22 @@ static void desenhaParedeCuboCompleto(float x, float z, GLuint texParedeX)
     glEnd();
 }
 
-static void desenhaTileLava(float x, float z)
+static void desenhaTileLava(float x, float z, const RenderAssets &r, float time)
 {
-    glUseProgram(progLava);
+    glUseProgram(r.progLava);
 
-    GLint locTime = glGetUniformLocation(progLava, "uTime");
-    GLint locStr = glGetUniformLocation(progLava, "uStrength");
-    GLint locScr = glGetUniformLocation(progLava, "uScroll");
-    GLint locHeat = glGetUniformLocation(progLava, "uHeat");
-    GLint locTex = glGetUniformLocation(progLava, "uTexture");
+    GLint locTime = glGetUniformLocation(r.progLava, "uTime");
+    GLint locStr = glGetUniformLocation(r.progLava, "uStrength");
+    GLint locScr = glGetUniformLocation(r.progLava, "uScroll");
+    GLint locHeat = glGetUniformLocation(r.progLava, "uHeat");
+    GLint locTex = glGetUniformLocation(r.progLava, "uTexture");
 
-    glUniform1f(locTime, tempo);
+    glUniform1f(locTime, time);
     glUniform1f(locStr, 1.0f);
     glUniform2f(locScr, 0.1f, 0.0f);
     glUniform1f(locHeat, 0.6f);
 
-    bindTexture0(texLava);
+    bindTexture0(r.texLava);
     glUniform1i(locTex, 0);
 
     glColor3f(1, 1, 1);
@@ -332,20 +308,20 @@ static void desenhaTileLava(float x, float z)
     glUseProgram(0);
 }
 
-static void desenhaTileSangue(float x, float z)
+static void desenhaTileSangue(float x, float z, const RenderAssets &r, float time)
 {
-    glUseProgram(progSangue);
+    glUseProgram(r.progSangue);
 
-    GLint locTime = glGetUniformLocation(progSangue, "uTime");
-    GLint locStr = glGetUniformLocation(progSangue, "uStrength");
-    GLint locSpd = glGetUniformLocation(progSangue, "uSpeed");
-    GLint locTex = glGetUniformLocation(progSangue, "uTexture");
+    GLint locTime = glGetUniformLocation(r.progSangue, "uTime");
+    GLint locStr = glGetUniformLocation(r.progSangue, "uStrength");
+    GLint locSpd = glGetUniformLocation(r.progSangue, "uSpeed");
+    GLint locTex = glGetUniformLocation(r.progSangue, "uTexture");
 
-    glUniform1f(locTime, tempo);
+    glUniform1f(locTime, time);
     glUniform1f(locStr, 1.0f);
     glUniform2f(locSpd, 2.0f, 1.3f);
 
-    bindTexture0(texSangue);
+    bindTexture0(r.texSangue);
     glUniform1i(locTex, 0);
 
     glColor3f(1, 1, 1);
@@ -368,7 +344,7 @@ static char getTileAt(const MapLoader &map, int tx, int tz)
     return data[tz][tx];
 }
 
-static void drawFace(float wx, float wz, int face, char neighbor, GLuint texParedeInternaX)
+static void drawFace(float wx, float wz, int face, char neighbor, GLuint texParedeInternaX, float time)
 {
     bool outside = (neighbor == '0' || neighbor == 'L' || neighbor == 'B');
 
@@ -382,13 +358,13 @@ static void drawFace(float wx, float wz, int face, char neighbor, GLuint texPare
     }
     else if (neighbor != '2')
     {
-        beginIndoor(wx, wz);
+        beginIndoor(wx, wz, time);
         desenhaParedePorFace(wx, wz, texParedeInternaX, face);
         endIndoor();
     }
 }
 
-void drawLevel(const MapLoader &map, float px, float pz, float dx, float dz)
+void drawLevel(const MapLoader &map, float px, float pz, float dx, float dz, const RenderAssets &r, float time)
 {
     const auto &data = map.data();
     const int H = map.getHeight();
@@ -429,28 +405,28 @@ void drawLevel(const MapLoader &map, float px, float pz, float dx, float dz)
 
                 if (isIndoor)
                 {
-                    beginIndoor(wx, wz);
-                    desenhaTileChao(wx, wz, texChaoInterno, true);
+                    beginIndoor(wx, wz, time);
+                    desenhaTileChao(wx, wz, r.texChaoInterno, true);
                     endIndoor();
                 }
                 else
                 {
-                    desenhaTileChao(wx, wz, texChao, false);
+                    desenhaTileChao(wx, wz, r.texChao, false);
                 }
             }
             else if (c == '0')
             {
-                desenhaTileChao(wx, wz, texChao, false);
+                desenhaTileChao(wx, wz, r.texChao, false);
             }
             else if (c == '3')
             {
-                beginIndoor(wx, wz);
-                desenhaTileChao(wx, wz, texChaoInterno, true);
+                beginIndoor(wx, wz, time);
+                desenhaTileChao(wx, wz, r.texChaoInterno, true);
                 endIndoor();
             }
             else if (c == '1')
             {
-                desenhaParedeCuboCompleto(wx, wz, texParede);
+                desenhaParedeCuboCompleto(wx, wz, r.texParede);
             }
             else if (c == '2')
             {
@@ -459,18 +435,18 @@ void drawLevel(const MapLoader &map, float px, float pz, float dx, float dz)
                 char vizDireita = getTileAt(map, x + 1, z);
                 char vizEsq = getTileAt(map, x - 1, z);
 
-                drawFace(wx, wz, 0, vizFrente, texParedeInterna);
-                drawFace(wx, wz, 1, vizTras, texParedeInterna);
-                drawFace(wx, wz, 2, vizDireita, texParedeInterna);
-                drawFace(wx, wz, 3, vizEsq, texParedeInterna);
+                drawFace(wx, wz, 0, vizFrente, r.texParedeInterna, time);
+                drawFace(wx, wz, 1, vizTras, r.texParedeInterna, time);
+                drawFace(wx, wz, 2, vizDireita, r.texParedeInterna, time);
+                drawFace(wx, wz, 3, vizEsq, r.texParedeInterna, time);
             }
             else if (c == 'L')
             {
-                desenhaTileLava(wx, wz);
+                desenhaTileLava(wx, wz, r, time);
             }
             else if (c == 'B')
             {
-                desenhaTileSangue(wx, wz);
+                desenhaTileSangue(wx, wz, r, time);
             }
         }
     }
@@ -519,7 +495,7 @@ static void drawSprite(float x, float z, float w, float h, GLuint tex, float cam
 
 // Desenha inimigos e itens
 void drawEntities(const std::vector<Enemy> &enemies, const std::vector<Item> &items,
-                  float camX, float camZ, float dx, float dz)
+                  float camX, float camZ, float dx, float dz, const RenderAssets &r)
 {
     glDisable(GL_LIGHTING);
     glEnable(GL_DEPTH_TEST);
@@ -541,9 +517,9 @@ void drawEntities(const std::vector<Enemy> &enemies, const std::vector<Item> &it
             continue;
 
         if (item.type == ITEM_HEALTH)
-            drawSprite(item.x, item.z, 0.7f, 0.7f, texHealth, camX, camZ);
+            drawSprite(item.x, item.z, 0.7f, 0.7f, r.texHealth, camX, camZ);
         else if (item.type == ITEM_AMMO)
-            drawSprite(item.x, item.z, 0.7f, 0.7f, texAmmo, camX, camZ);
+            drawSprite(item.x, item.z, 0.7f, 0.7f, r.texAmmo, camX, camZ);
     }
 
     // --- INIMIGOS ---
@@ -559,11 +535,11 @@ void drawEntities(const std::vector<Enemy> &enemies, const std::vector<Item> &it
 
         GLuint currentTex;
         if (en.hurtTimer > 0.0f)
-            currentTex = texEnemiesDamage[t];
+            currentTex = r.texEnemiesDamage[t];
         else if (en.state == STATE_CHASE || en.state == STATE_ATTACK)
-            currentTex = texEnemiesRage[t];
+            currentTex = r.texEnemiesRage[t];
         else
-            currentTex = texEnemies[t];
+            currentTex = r.texEnemies[t];
 
         drawSprite(en.x, en.z, 2.5f, 2.5f, currentTex, camX, camZ);
     }

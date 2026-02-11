@@ -113,10 +113,10 @@ static void drawWeaponHUD(int w, int h, const HudTextures& tex, WeaponState ws)
 {
     GLuint currentTex = tex.texGunDefault;
 
-    if (ws == W_FIRE_1 || ws == W_RETURN) currentTex = tex.texGunFire1;
-    else if (ws == W_FIRE_2) currentTex = tex.texGunFire2;
-    else if (ws == W_RELOAD_1 || ws == W_RELOAD_3) currentTex = tex.texGunReload1;
-    else if (ws == W_RELOAD_2) currentTex = tex.texGunReload2;
+    if (ws == WeaponState::W_FIRE_1 || ws == WeaponState::W_RETURN) currentTex = tex.texGunFire1;
+    else if (ws == WeaponState::W_FIRE_2) currentTex = tex.texGunFire2;
+    else if (ws == WeaponState::W_RELOAD_1 || ws == WeaponState::W_RELOAD_3) currentTex = tex.texGunReload1;
+    else if (ws == WeaponState::W_RELOAD_2) currentTex = tex.texGunReload2;
 
     if (currentTex == 0)
         return;
@@ -137,7 +137,7 @@ static void drawWeaponHUD(int w, int h, const HudTextures& tex, WeaponState ws)
     float x = (w - gunW) / 2.0f;
     float y = 0.0f;
 
-    if (ws != W_IDLE)
+    if (ws != WeaponState::W_IDLE)
     {
         y -= 20.0f;
         x += (float)(std::rand() % 10 - 5);

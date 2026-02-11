@@ -5,10 +5,12 @@
 #include "core/entities.h"
 #include <vector>
 
-// Note que adicionamos camX, camZ (posição) e dirX, dirZ (para onde você olha)
-void drawLevel(const MapLoader& map, float camX, float camZ, float dirX, float dirZ);
+struct RenderAssets; // forward decl (vem de core/game_state.h)
 
-void drawEntities(const std::vector<Enemy>& enemies, const std::vector<Item>& items, 
-                  float camX, float camZ, float dirX, float dirZ);
+void drawLevel(const MapLoader &map, float px, float pz, float dx, float dz, const RenderAssets &r, float time);
 
+void drawEntities(const std::vector<Enemy> &enemies,
+                  const std::vector<Item> &items,
+                  float camX, float camZ, float dx, float dz,
+                  const RenderAssets &r);
 #endif

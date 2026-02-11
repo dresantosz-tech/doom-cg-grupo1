@@ -1,9 +1,7 @@
 #include "graphics/skybox.h"
 #include <GL/glut.h>
 #include <cmath>
-
-// Referência para a textura que será carregada no game.cpp/assets.cpp
-extern GLuint texSkydome;
+#include "core/game_state.h"
 
 static inline float clampf(float x, float a, float b)
 {
@@ -17,7 +15,7 @@ static float vFromPhi(float phi, float phiMax, float vStart, float vHorizon)
     return clampf(v, 0.0f, 1.0f);
 }
 
-void drawSkydome(float camX, float camY, float camZ)
+void drawSkydome(float camX, float camY, float camZ, const RenderAssets& r)
 {
     const float R = 200.0f; // Raio do domo (Céu)
     const int slices = 64;  // Resolução horizontal
@@ -37,7 +35,7 @@ void drawSkydome(float camX, float camY, float camZ)
     glColor3f(1.0f, 1.0f, 1.0f);
     glActiveTexture(GL_TEXTURE0);
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, texSkydome);
+    glBindTexture(GL_TEXTURE_2D, r.texSkydome);
     
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

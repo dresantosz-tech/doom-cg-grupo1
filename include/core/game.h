@@ -1,26 +1,24 @@
 #pragma once
+
+#include "core/game_enums.h"
 #include "level/level.h"
 
-// 1. Definimos os estados aqui para serem visíveis no input.cpp
-enum GameState {
-    MENU_INICIAL,
-    JOGANDO,
-    PAUSADO,
-    GAME_OVER
-};
+Level &gameLevel();
 
-// 2. Declaramos que essas variáveis existem (extern) para uso global
-extern GameState currentState;
-extern int playerHealth; 
+// Estado do jogo
+GameState gameGetState();
+void gameSetState(GameState s);
+void gameTogglePause();
 
-void audioPlayStepTap();
-extern Level gLevel;
+// Acesso controlado ao Level (se alguém ainda precisar)
+Level &gameLevel();
 
-bool gameInit(const char* mapPath);
+// Fluxo principal
+bool gameInit(const char *mapPath);
 void gameUpdate(float dt);
 void gameRender();
+void gameReset();
+
+// Ações do player
 void playerTryAttack();
 void playerTryReload();
-
-// Nova função para reiniciar o jogo ao morrer
-void gameReset();

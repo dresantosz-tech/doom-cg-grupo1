@@ -1,3 +1,5 @@
+#include "core/game_enums.h"
+#include "core/game_state.h"
 #include "audio/audio_system.h"
 #include "graphics/hud.h"
 #include "graphics/menu.h"
@@ -23,43 +25,9 @@
 
 static FireSystem gFire;
 static HudTextures gHudTex;
+static GameContext g;
 
-// --- VARIÁVEIS GLOBAIS ---
-GLuint texChao;
-GLuint texParede;
-GLuint texSangue;
-GLuint texLava;
-GLuint texChaoInterno;
-GLuint texParedeInterna;
-GLuint texTeto;
-GLuint texSkydome;
-
-// Texturas de Entidades
-GLuint texEnemies[5];
-GLuint texEnemiesRage[5];
-GLuint texEnemiesDamage[5];
-GLuint texHealth;
-GLuint texAmmo;
-
-float damageAlpha = 0.0f; // Começa invisível
-float healthAlpha = 0.0f;
-
-GLuint progSangue;
-GLuint progLava;
-
-float tempo = 0.0f;
-
-int playerHealth = 100; // Vida do Jogador
-
-// SISTEMA DE MUNIÇÃO
-const int MAX_MAGAZINE = 12; // Capacidade do pente
-int currentAmmo = 12;        // Balas na arma
-int reserveAmmo = 25;        // Balas no bolso
-
-GameState currentState = MENU_INICIAL; // Começa no menu
-
-WeaponState weaponState = W_IDLE;
-float weaponTimer = 0.0f;
+constexpr int MAX_MAGAZINE = 12;
 
 // --- Assets / Level ---
 static GameAssets gAssets;
@@ -71,6 +39,19 @@ const float ENEMY_VIEW_DIST = 15.0f;
 const float ENEMY_ATTACK_DIST = 1.5f;
 
 static AudioSystem gAudioSys;
+
+GameState gameGetState() { return g.state; }
+void gameSetState(GameState s) { g.state = s; }
+
+void gameTogglePause()
+{
+    if (g.state == GameState::JOGANDO)
+        g.state = GameState::PAUSADO;
+    else if (g.state == GameState::PAUSADO)
+        g.state = GameState::JOGANDO;
+}
+
+Level &gameLevel() { return gLevel; } 
 
 // --- FUNÇÕES AUXILIARES DE LUZ ---
 static void setupIndoorLightOnce()
@@ -109,18 +90,15 @@ static void setSunDirectionEachFrame()
 
 void playerTryReload()
 {
-    if (weaponState != W_IDLE)
+    if (g.weapon.state != WeaponState::W_IDLE)
+        return;
+    if (g.player.currentAmmo >= MAX_MAGAZINE)
+        return;
+    if (g.player.reserveAmmo <= 0)
         return;
 
-    if (currentAmmo >= MAX_MAGAZINE)
-        return;
-
-    if (reserveAmmo <= 0)
-        return;
-
-    std::printf("Recarregando...\n");
-    weaponState = W_RELOAD_1;
-    weaponTimer = 0.50f;
+    g.weapon.state = WeaponState::W_RELOAD_1;
+    g.weapon.timer = 0.50f;
 
     audioPlayReload(gAudioSys);
 }
@@ -128,20 +106,18 @@ void playerTryReload()
 // --- ATAQUE ---
 void playerTryAttack()
 {
-    if (weaponState != W_IDLE)
+    if (g.weapon.state != WeaponState::W_IDLE)
         return;
-    if (currentAmmo <= 0)
-    {
+    if (g.player.currentAmmo <= 0)
         return;
-    }
 
-    currentAmmo--;
+    g.player.currentAmmo--;
 
     audioOnPlayerShot(gAudioSys);
     audioPlayShot(gAudioSys);
 
-    weaponState = W_FIRE_1;
-    weaponTimer = 0.08f;
+    g.weapon.state = WeaponState::W_FIRE_1;
+    g.weapon.timer = 0.08f;
 
     for (auto &en : gLevel.enemies)
     {
@@ -283,9 +259,9 @@ void updateEntities(float dt)
                 en.attackCooldown -= dt;
                 if (en.attackCooldown <= 0.0f)
                 {
-                    playerHealth -= 10;
+                    g.player.health -= 10;
                     en.attackCooldown = 1.0f;
-                    damageAlpha = 1.0f;
+                    g.player.damageAlpha = 1.0f;
 
                     audioPlayHurt(gAudioSys);
                 }
@@ -320,15 +296,15 @@ void updateEntities(float dt)
             if (item.type == ITEM_HEALTH)
             {
                 item.respawnTimer = 15.0f;
-                playerHealth += 50;
-                if (playerHealth > 100)
-                    playerHealth = 100;
-                healthAlpha = 1.0f;
+                g.player.health += 50;
+                if (g.player.health > 100)
+                    g.player.health = 100;
+                g.player.healthAlpha = 1.0f;
             }
             else if (item.type == ITEM_AMMO)
             {
                 item.respawnTimer = 999999.0f;
-                reserveAmmo = 20;
+                g.player.reserveAmmo = 20;
             }
         }
     }
@@ -348,15 +324,15 @@ bool gameInit(const char *mapPath)
     if (!loadAssets(gAssets))
         return false;
 
-    texChao = gAssets.texChao;
-    texParede = gAssets.texParede;
-    texSangue = gAssets.texSangue;
-    texLava = gAssets.texLava;
-    texChaoInterno = gAssets.texChaoInterno;
-    texParedeInterna = gAssets.texParedeInterna;
-    texTeto = gAssets.texTeto;
+    g.r.texChao = gAssets.texChao;
+    g.r.texParede = gAssets.texParede;
+    g.r.texSangue = gAssets.texSangue;
+    g.r.texLava = gAssets.texLava;
+    g.r.texChaoInterno = gAssets.texChaoInterno;
+    g.r.texParedeInterna = gAssets.texParedeInterna;
+    g.r.texTeto = gAssets.texTeto;
 
-    texSkydome = gAssets.texSkydome;
+    g.r.texSkydome = gAssets.texSkydome;
 
     gHudTex.texHudFundo = gAssets.texHudFundo;
     gHudTex.texGunHUD = gAssets.texGunHUD;
@@ -372,16 +348,16 @@ bool gameInit(const char *mapPath)
 
     for (int i = 0; i < 5; i++)
     {
-        texEnemies[i] = gAssets.texEnemies[i];
-        texEnemiesRage[i] = gAssets.texEnemiesRage[i];
-        texEnemiesDamage[i] = gAssets.texEnemiesDamage[i];
+        g.r.texEnemies[i] = gAssets.texEnemies[i];
+        g.r.texEnemiesRage[i] = gAssets.texEnemiesRage[i];
+        g.r.texEnemiesDamage[i] = gAssets.texEnemiesDamage[i];
     }
 
-    texHealth = gAssets.texHealth;
-    texAmmo = gAssets.texAmmo;
+    g.r.texHealth = gAssets.texHealth;
+    g.r.texAmmo = gAssets.texAmmo;
 
-    progSangue = gAssets.progSangue;
-    progLava = gAssets.progLava;
+    g.r.progSangue = gAssets.progSangue;
+    g.r.progLava = gAssets.progLava;
 
     if (!loadLevel(gLevel, mapPath, GameConfig::TILE_SIZE))
         return false;
@@ -397,6 +373,11 @@ bool gameInit(const char *mapPath)
     // Audio init + ambient + enemy sources
     audioInit(gAudioSys, gLevel);
 
+    g.state = GameState::MENU_INICIAL;
+    g.time = 0.0f;
+    g.player = PlayerState{};
+    g.weapon = WeaponAnim{};
+
     return true;
 }
 
@@ -407,58 +388,55 @@ void updateWeaponAnim(float dt)
     const float RELOAD_T2 = 0.85f;
     const float RELOAD_T3 = 0.25f;
 
-    if (weaponState == W_IDLE)
+    if (g.weapon.state == WeaponState::W_IDLE)
         return;
 
-    weaponTimer -= dt;
-
-    if (weaponTimer > 0.0f)
+    g.weapon.timer -= dt;
+    if (g.weapon.timer > 0.0f)
         return;
 
-    if (weaponState == W_FIRE_1)
+    if (g.weapon.state == WeaponState::W_FIRE_1)
     {
-        weaponState = W_FIRE_2;
-        weaponTimer = TIME_FRAME_2;
+        g.weapon.state = WeaponState::W_FIRE_2;
+        g.weapon.timer = TIME_FRAME_2;
     }
-    else if (weaponState == W_FIRE_2)
+    else if (g.weapon.state == WeaponState::W_FIRE_2)
     {
-        weaponState = W_PUMP;
-        weaponTimer = AudioTuning::PUMP_TIME;
+        g.weapon.state = WeaponState::W_PUMP;
+        g.weapon.timer = AudioTuning::PUMP_TIME;
         audioPlayPumpClick(gAudioSys);
     }
-    else if (weaponState == W_RETURN)
+    else if (g.weapon.state == WeaponState::W_RETURN)
     {
-        weaponState = W_IDLE;
-        weaponTimer = 0.0f;
+        g.weapon.state = WeaponState::W_IDLE;
+        g.weapon.timer = 0.0f;
     }
-
-    else if (weaponState == W_PUMP)
+    else if (g.weapon.state == WeaponState::W_PUMP)
     {
-        weaponState = W_IDLE;
-        weaponTimer = 0.0f;
+        g.weapon.state = WeaponState::W_IDLE;
+        g.weapon.timer = 0.0f;
     }
-
-    else if (weaponState == W_RELOAD_1)
+    else if (g.weapon.state == WeaponState::W_RELOAD_1)
     {
-        weaponState = W_RELOAD_2;
-        weaponTimer = RELOAD_T2;
+        g.weapon.state = WeaponState::W_RELOAD_2;
+        g.weapon.timer = RELOAD_T2;
     }
-    else if (weaponState == W_RELOAD_2)
+    else if (g.weapon.state == WeaponState::W_RELOAD_2)
     {
-        weaponState = W_RELOAD_3;
-        weaponTimer = RELOAD_T3;
+        g.weapon.state = WeaponState::W_RELOAD_3;
+        g.weapon.timer = RELOAD_T3;
     }
-    else if (weaponState == W_RELOAD_3)
+    else if (g.weapon.state == WeaponState::W_RELOAD_3)
     {
-        weaponState = W_IDLE;
-        weaponTimer = 0.0f;
+        g.weapon.state = WeaponState::W_IDLE;
+        g.weapon.timer = 0.0f;
 
-        int needed = MAX_MAGAZINE - currentAmmo;
-        if (needed > reserveAmmo)
-            needed = reserveAmmo;
+        int needed = MAX_MAGAZINE - g.player.currentAmmo;
+        if (needed > g.player.reserveAmmo)
+            needed = g.player.reserveAmmo;
 
-        currentAmmo += needed;
-        reserveAmmo -= needed;
+        g.player.currentAmmo += needed;
+        g.player.reserveAmmo -= needed;
     }
 }
 
@@ -481,28 +459,25 @@ void drawText(float x, float y, const char *text, float escala)
 // Reinicia o jogo
 void gameReset()
 {
-    playerHealth = 100;
+    g.player.health = 100;
+    g.player.currentAmmo = 12;
+    g.player.reserveAmmo = 25;
 
-    // Resetar munição (precisa acessar as variaveis globais)
-    extern int currentAmmo, reserveAmmo;
-    currentAmmo = 12;
-    reserveAmmo = 25;
+    g.player.damageAlpha = 0.0f;
+    g.player.healthAlpha = 0.0f;
 
-    // Resetar efeitos visuais
-    extern float damageAlpha, healthAlpha;
-    damageAlpha = 0.0f;
-    healthAlpha = 0.0f;
-
+    g.weapon.state = WeaponState::W_IDLE;
+    g.weapon.timer = 0.0f;
     // Respawna o jogador
     applySpawn(gLevel, camX, camZ);
 }
 
 void gameUpdate(float dt)
 {
-    tempo += dt;
+    g.time += dt;
 
     // 1. SE NÃO ESTIVER JOGANDO, NÃO RODA A LÓGICA DO JOGO
-    if (currentState != JOGANDO)
+    if (g.state != GameState::JOGANDO)
     {
         return;
     }
@@ -520,29 +495,29 @@ void gameUpdate(float dt)
     L.vel = {0.0f, 0.0f, 0.0f};
 
     bool moving = (keyW || keyA || keyS || keyD);
-    audioUpdate(gAudioSys, gLevel, L, dt, moving, playerHealth);
+    audioUpdate(gAudioSys, gLevel, L, dt, moving, g.player.health);
 
-    if (damageAlpha > 0.0f)
+    if (g.player.damageAlpha > 0.0f)
     {
-        damageAlpha -= dt * 0.5f;
-        if (damageAlpha < 0.0f)
-            damageAlpha = 0.0f;
+        g.player.damageAlpha -= dt * 0.5f;
+        if (g.player.damageAlpha < 0.0f)
+            g.player.damageAlpha = 0.0f;
     }
-    if (healthAlpha > 0.0f)
+    if (g.player.healthAlpha > 0.0f)
     {
-        healthAlpha -= dt * 0.9f;
-        if (healthAlpha < 0.0f)
-            healthAlpha = 0.0f;
+        g.player.healthAlpha -= dt * 0.9f;
+        if (g.player.healthAlpha < 0.0f)
+            g.player.healthAlpha = 0.0f;
     }
 
     updateEntities(dt);
     updateWeaponAnim(dt);
 
     // 3. CHECAGEM DE GAME OVER
-    if (playerHealth <= 0)
+    if (g.player.health <= 0)
     {
-        currentState = GAME_OVER;
-        damageAlpha = 1.0f; // Tela vermelha ao morrer
+        g.state = GameState::GAME_OVER;
+        g.player.damageAlpha = 1.0f;
     }
 }
 
@@ -567,9 +542,9 @@ void drawWorld3D()
 
     // Desenha o cenário
     setSunDirectionEachFrame();
-    drawSkydome(camX, camY, camZ);
-    drawLevel(gLevel.map, camX, camZ, dirX, dirZ);
-    drawEntities(gLevel.enemies, gLevel.items, camX, camZ, dirX, dirZ);
+    drawSkydome(camX, camY, camZ, g.r);
+    drawLevel(gLevel.map, camX, camZ, dirX, dirZ, g.r, g.time);
+    drawEntities(gLevel.enemies, gLevel.items, camX, camZ, dirX, dirZ, g.r);
 }
 
 // --- MENU DE PAUSE (CENTRALIZADO) ---
@@ -651,7 +626,7 @@ void drawPauseMenu()
     float ySub = (janelaH / 2.0f) - 60.0f;
 
     // Pisca Amarelo
-    if ((int)(tempo * 3) % 2 == 0)
+    if ((int)(g.time * 3) % 2 == 0)
         glColor3f(1, 1, 0);
     else
         glColor3f(1, 1, 1);
@@ -677,21 +652,21 @@ void gameRender()
 
     // Monta o estado do HUD a partir das variáveis globais do jogo
     HudState hs;
-    hs.playerHealth = playerHealth;
-    hs.currentAmmo = currentAmmo;
-    hs.reserveAmmo = reserveAmmo;
-    hs.damageAlpha = damageAlpha;
-    hs.healthAlpha = healthAlpha;
-    hs.weaponState = (WeaponState)weaponState; // se seu weaponState global já for WeaponState, pode remover o cast
+    hs.playerHealth = g.player.health;
+    hs.currentAmmo = g.player.currentAmmo;
+    hs.reserveAmmo = g.player.reserveAmmo;
+    hs.damageAlpha = g.player.damageAlpha;
+    hs.healthAlpha = g.player.healthAlpha;
+    hs.weaponState = g.weapon.state;
 
     // --- ESTADO: MENU INICIAL ---
-    if (currentState == MENU_INICIAL)
+    if (g.state == GameState::MENU_INICIAL)
     {
         // menuRender já cuida do fogo (update + render)
-        menuRender(janelaW, janelaH, tempo, gFire, "DOOM LIKE", "Pressione ENTER para Jogar");
+        menuRender(janelaW, janelaH, g.time, gFire, "DOOM LIKE", "Pressione ENTER para Jogar");
     }
     // --- ESTADO: GAME OVER ---
-    else if (currentState == GAME_OVER)
+    else if (g.state == GameState::GAME_OVER)
     {
         // Fundo 3D congelado
         drawWorld3D();
@@ -700,10 +675,10 @@ void gameRender()
         hudRenderAll(janelaW, janelaH, gHudTex, hs, false, false, true);
 
         // Tela do game over por cima (com fogo)
-        menuRender(janelaW, janelaH, tempo, gFire, "GAME OVER", "Pressione ENTER para Reiniciar");
+        menuRender(janelaW, janelaH, g.time, gFire, "GAME OVER", "Pressione ENTER para Reiniciar");
     }
     // --- ESTADO: PAUSADO ---
-    else if (currentState == PAUSADO)
+    else if (g.state == GameState::PAUSADO)
     {
         // 1) Mundo 3D congelado
         drawWorld3D();
@@ -712,7 +687,7 @@ void gameRender()
         hudRenderAll(janelaW, janelaH, gHudTex, hs, true, true, true);
 
         // 3) Menu escuro por cima
-        pauseMenuRender(janelaW, janelaH, tempo);
+        pauseMenuRender(janelaW, janelaH, g.time);
     }
     // --- ESTADO: JOGANDO ---
     else // JOGANDO
@@ -722,7 +697,6 @@ void gameRender()
 
         // 2) HUD completo
         hudRenderAll(janelaW, janelaH, gHudTex, hs, true, true, true);
-        printf("HUD gun default tex = %u\n", gHudTex.texGunDefault);
     }
 
     glutSwapBuffers();

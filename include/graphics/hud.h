@@ -1,18 +1,8 @@
 #pragma once
 
+#include "core/game_enums.h"
 #include <GL/glew.h>
 
-enum WeaponState
-{
-    W_IDLE,
-    W_FIRE_1,
-    W_FIRE_2,
-    W_RETURN,
-    W_PUMP,
-    W_RELOAD_1,
-    W_RELOAD_2,
-    W_RELOAD_3
-};
 
 struct HudTextures
 {
@@ -38,7 +28,7 @@ struct HudState
     float damageAlpha = 0.0f;
     float healthAlpha = 0.0f;
 
-    WeaponState weaponState = W_IDLE;
+    WeaponState weaponState = WeaponState::W_IDLE;
 };
 
 void hudRenderAll(

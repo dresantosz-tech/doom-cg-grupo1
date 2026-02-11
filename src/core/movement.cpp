@@ -12,8 +12,8 @@
 
 static bool isWallTile(int tx, int tz)
 {
-    const auto &data = gLevel.map.data();
-    if (tz < 0 || tx < 0 || tz >= gLevel.map.getHeight())
+    const auto &data = gameLevel().map.data();
+    if (tz < 0 || tx < 0 || tz >= gameLevel().map.getHeight())
         return false;
     if (tx >= (int)data[tz].size())
         return false;
@@ -46,10 +46,10 @@ static bool pointIntersectsTile(float px, float pz, int tx, int tz, const LevelM
 
 static bool canMoveTo(float nx, float nz)
 {
-    if (gLevel.map.getHeight() == 0)
+    if (gameLevel().map.getHeight() == 0)
         return true;
 
-    const LevelMetrics &m = gLevel.metrics;
+    const LevelMetrics &m = gameLevel().metrics;
     float tile = m.tile;
     float radius = tile * GameConfig::PLAYER_RADIUS_FACTOR;
 

@@ -1,7 +1,5 @@
 #pragma once
 
-extern int playerHealth;
-
 enum EnemyState
 {
     STATE_IDLE,

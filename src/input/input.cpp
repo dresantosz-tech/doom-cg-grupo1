@@ -1,7 +1,6 @@
 #include <GL/glut.h>
 #include <cmath>
 #include <cstdlib>
-
 #include "input/input.h"
 #include "input/keystate.h"
 #include "core/window.h"
@@ -9,38 +8,38 @@
 
 void keyboard(unsigned char key, int, int)
 {
+    const GameState state = gameGetState();
     // ESC sai do jogo imediatamente em qualquer tela
     if (key == 27) std::exit(0);
 
     // --- MENU INICIAL ---
-    if (currentState == MENU_INICIAL) {
+    if (state == GameState::MENU_INICIAL) {
         if (key == 13) { // ENTER
-            currentState = JOGANDO;
+            gameSetState(GameState::JOGANDO);
         }
         return;
     }
 
     // --- GAME OVER ---
-    if (currentState == GAME_OVER) {
+    if (state == GameState::GAME_OVER) {
         if (key == 13) { // ENTER reinicia
             gameReset();
-            currentState = JOGANDO;
-        }
+            gameSetState(GameState::JOGANDO);        }
         return;
     }
 
     // --- PAUSE ---
-    if (currentState == PAUSADO) {
+    if (state == GameState::PAUSADO) {
         if (key == 'p' || key == 'P') {
-            currentState = JOGANDO; // Despausa
+           gameSetState(GameState::JOGANDO);
         }
         return;
     }
 
     // --- JOGANDO ---
-    if (currentState == JOGANDO) {
+    if (state == GameState::JOGANDO) {
         if (key == 'p' || key == 'P') {
-            currentState = PAUSADO;
+           gameSetState(GameState::PAUSADO);
             // Para o movimento ao pausar
             keyW = keyA = keyS = keyD = false; 
             return;
