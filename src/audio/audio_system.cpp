@@ -165,8 +165,8 @@ void audioInit(AudioSystem& a, const Level& level) {
     a.engine.setDistanceModel();
 
     // Loads (com fallback mono/estéreo)
-    a.bufAmbient = a.engine.loadWav("assets/audio/ambient_mono.wav");
-    if (!a.bufAmbient) a.bufAmbient = a.engine.loadWav("assets/audio/ambient.wav");
+    a.bufAmbient = a.engine.loadWav("assets/audio/music.wav");
+    if (!a.bufAmbient) a.bufAmbient = a.engine.loadWav("assets/audio/music.wav");
 
     a.bufShot = a.engine.loadWav("assets/audio/shot_mono.wav");
     if (!a.bufShot) a.bufShot = a.engine.loadWav("assets/audio/shot.wav");
