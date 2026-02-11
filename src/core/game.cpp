@@ -87,6 +87,7 @@ bool gameInit(const char *mapPath)
     g.r.texTeto = gAssets.texTeto;
 
     g.r.texSkydome = gAssets.texSkydome;
+    g.r.texMenuBG = gAssets.texMenuBG;
 
     gHudTex.texHudFundo = gAssets.texHudFundo;
     gHudTex.texGunHUD = gAssets.texGunHUD;
@@ -244,7 +245,7 @@ void gameRender()
     if (g.state == GameState::MENU_INICIAL)
     {
         // menuRender já cuida do fogo (update + render)
-        menuRender(janelaW, janelaH, g.time, gFire, "DOOM LIKE", "Pressione ENTER para Jogar");
+        menuRender(janelaW, janelaH, g.time, "", "Pressione ENTER para Jogar", g.r);
     }
     // --- ESTADO: GAME OVER ---
     else if (g.state == GameState::GAME_OVER)
@@ -252,11 +253,11 @@ void gameRender()
         // Fundo 3D congelado
         drawWorld3D();
 
-        // HUD mínimo no game over: só barra + overlays (sem arma e sem mira)
-        hudRenderAll(janelaW, janelaH, gHudTex, hs, false, false, true);
+        // OVERLAY DO MELT por cima do jogo
+        // menuMeltRenderOverlay(janelaW, janelaH, g.time);
 
         // Tela do game over por cima (com fogo)
-        menuRender(janelaW, janelaH, g.time, gFire, "GAME OVER", "Pressione ENTER para Reiniciar");
+        menuRender(janelaW, janelaH, g.time, "GAME OVER", "Pressione ENTER para Reiniciar", g.r);
     }
     // --- ESTADO: PAUSADO ---
     else if (g.state == GameState::PAUSADO)
@@ -278,6 +279,8 @@ void gameRender()
 
         // 2) HUD completo
         hudRenderAll(janelaW, janelaH, gHudTex, hs, true, true, true);
+
+        menuMeltRenderOverlay(janelaW, janelaH, g.time);
     }
 
     glutSwapBuffers();

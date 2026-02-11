@@ -23,7 +23,8 @@ static bool isWallTile(int tx, int tz)
 
     char c = data[tz][tx];
     // Adicione E, H, A como liberados
-    if (c == 'E' || c == 'H' || c == 'A') return false; 
+    if (c == 'E' || c == 'H' || c == 'A')
+        return false;
 
     return (c == '1' || c == '2');
 }
@@ -136,6 +137,9 @@ void atualizaMovimento()
 
 void mouseMotion(int x, int y)
 {
+    if (gameGetState() != GameState::JOGANDO)
+        return;
+
     if (ignoreWarp)
     {
         ignoreWarp = false;

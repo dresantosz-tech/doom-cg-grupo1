@@ -5,6 +5,8 @@
 
 bool loadAssets(GameAssets &a)
 {
+    a.texMenuBG = carregaTextura("assets/menu_bg.png");
+
     a.texChao = carregaTextura("assets/181.png");
     a.texParede = carregaTextura("assets/091.png");
     a.texSangue = carregaTextura("assets/016.png");
@@ -56,13 +58,13 @@ bool loadAssets(GameAssets &a)
     a.texGunHUD = carregaTextura("assets/Shotgun.png");
     a.texHudFundo = carregaTextura("assets/088.png");
 
-    if (!a.texChao || !a.texParede || !a.texSangue || !a.texLava || !a.progSangue || 
-        !a.progLava || !a.texHealth || !a.texGunDefault || !a.texGunFire1 || 
-        !a.texGunFire2 || !a.texSkydome || !a.texGunReload1 || !a.texGunReload2 || 
-        !a.texDamage || !a.texAmmo || !a.texHealthOverlay || !a.texEnemies[0] || 
-        !a.texEnemiesRage[0] || !a.texEnemiesDamage[0] || !a.texEnemies[1] || 
-        !a.texEnemiesRage[1] || !a.texEnemiesDamage[1] || !a.texEnemies[2] || 
-        !a.texEnemiesRage[2] || !a.texEnemiesDamage[2] || !a.texGunHUD || !a.texHudFundo)
+    if (!a.texChao || !a.texParede || !a.texSangue || !a.texLava || !a.progSangue ||
+        !a.progLava || !a.texHealth || !a.texGunDefault || !a.texGunFire1 ||
+        !a.texGunFire2 || !a.texSkydome || !a.texGunReload1 || !a.texGunReload2 ||
+        !a.texDamage || !a.texAmmo || !a.texHealthOverlay || !a.texEnemies[0] ||
+        !a.texEnemiesRage[0] || !a.texEnemiesDamage[0] || !a.texEnemies[1] ||
+        !a.texEnemiesRage[1] || !a.texEnemiesDamage[1] || !a.texEnemies[2] ||
+        !a.texEnemiesRage[2] || !a.texEnemiesDamage[2] || !a.texGunHUD || !a.texHudFundo || !a.texMenuBG)
     {
         std::printf("ERRO: falha ao carregar algum asset (textura/shader).\n");
         return false;
