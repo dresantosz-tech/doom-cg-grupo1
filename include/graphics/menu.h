@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include "graphics/fire_particles.h"
 
 struct RenderAssets; // forward decl (vem de core/game_state.h)
 

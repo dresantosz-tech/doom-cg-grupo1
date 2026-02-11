@@ -19,7 +19,6 @@
 #include "graphics/hud.h"
 #include "graphics/menu.h"
 #include "graphics/lighting.h"
-#include "graphics/fire_particles.h"
 
 #include "core/movement.h"
 #include "core/player.h"
@@ -35,7 +34,6 @@
 #include <GL/glew.h>
 #include <GL/glut.h>
 
-static FireSystem gFire;
 static HudTextures gHudTex;
 static GameContext g;
 
