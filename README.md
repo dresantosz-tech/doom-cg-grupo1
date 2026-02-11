@@ -14,7 +14,7 @@ Este projeto utiliza **OpenGL (pipeline fixo + GLSL 1.20)** para renderização,
 como shaders, VBOs e extensões necessárias.
 
 ## 🎥 Demonstração
-[https://github.com/user-attachments/assets/e15d84f7-5f58-44b0-a429-0d45a9c4fcaf](https://github.com/user-attachments/assets/9b189b93-a64c-4fe9-8b0c-a8a40d17050a)
+https://github.com/user-attachments/assets/be16fdec-675c-429a-895a-5aeb3071632c
 
 ---
 
