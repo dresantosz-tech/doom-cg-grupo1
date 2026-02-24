@@ -46,11 +46,11 @@ bool loadLevel(Level &lvl, const char *mapPath, float tileSize)
             // --- ALTERAÇÃO AQUI: Lógica para múltiplos inimigos (E, F, G) ---
             int enemyType = -1; // -1 significa "não é inimigo"
 
-            if (c == 'J') enemyType = 0;      // Inimigo Tipo 1
-            else if (c == 'T') enemyType = 1; // Inimigo Tipo 2 
-            else if (c == 'M') enemyType = 2; // Inimigo Tipo 3 
-            else if (c == 'G') enemyType = 3; // Inimigo Tipo 4
-            else if (c == 'K') enemyType = 4; // Inimigo Tipo 5
+            if (c == 'E') enemyType = 0;      // Inimigo Tipo 1
+            else if (c == 'F') enemyType = 1; // Inimigo Tipo 2 
+            else if (c == 'G') enemyType = 2; // Inimigo Tipo 3 
+            else if (c == 'I') enemyType = 3; // Inimigo Tipo 4
+            else if (c == 'J') enemyType = 4; // Inimigo Tipo 5
 
             if (enemyType != -1) // Se achou qualquer um dos inimigos
             {
@@ -86,15 +86,15 @@ bool loadLevel(Level &lvl, const char *mapPath, float tileSize)
                 i.respawnTimer = 0.0f;
                 lvl.items.push_back(i);
             }
-             else if (c == 'A') // Ammo (Munição)
-            {
-                Item i;
-                i.x = wx;
-                i.z = wz;
-                i.type = ITEM_AMMO;
-                i.active = true;
-                lvl.items.push_back(i);
-            }
+            //  else if (c == 'A') // Ammo (Munição) (vou mudar aqui para identificar quando for pra pegar a chave)
+            // {
+            //     Item i;
+            //     i.x = wx;
+            //     i.z = wz;
+            //     i.type = ITEM_AMMO;
+            //     i.active = true;
+            //     lvl.items.push_back(i);
+            // }
         }
     }
 
