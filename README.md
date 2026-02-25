@@ -1,13 +1,4 @@
-❤️ Nicolas ❤️ PARABÉNS AOS QUE ESTÃO LISTADOS, E SEU GRUPO, COMO COLABORADORES NESTE REPOSITÓRIO
-
-
-# ODEIOS
-- ODEIO DÁRIO
-- ODEIO HELOYSA
-- ODEIO AUZIER
-- ODEIO KELVIN
-
-# DoomLike OpenGL Project
+# Labirinto OpenGL Project
 
 Este projeto utiliza **OpenGL (pipeline fixo + GLSL 1.20)** para renderização,  
 **GLUT** para gerenciamento de janela/entrada e **GLEW** para carregar funções modernas  
@@ -69,6 +60,7 @@ A cena pode ser explorada em primeira pessoa, com movimentação típica de FPS 
 | **A** | Mover para a esquerda (strafe) |
 | **S** | Recuar |
 | **D** | Mover para a direita (strafe) |
+| **LSHIFT** | Manter pressionado faz personagem correr |
 
 ---
 
@@ -103,26 +95,17 @@ Cada **linha do arquivo** corresponde a uma linha do mapa, e **todas as linhas d
 
 ---
 
-### 🧩 Legenda do mapa (originais)
+### 🧩 Legenda do mapa
 | Caractere | Significado |
 |----------|-------------|
-| `1` | Parede |
-| `0` | Chão normal (piso) |
-| `L` | Lava (tile com shader de calor) |
-| `B` | Sangue (tile com shader de distorção) |
-| `9` | Spawn do jogador *(o loader converte para `0` após ler)* |
+| `Z` | Parede |
+| `.` | Chão normal (piso) |
+| `,` | Chão e Teto |
+| `D` | Porta Trancada |
+| `P` | Spawn do jogador *(o loader converte para `Z` após ler)* |
+| `S` | Saída da fase |
 
 ---
-
-### 📌 Exemplo simples de mapa
-```txt
-1111111111
-1000000001
-10L0000B01
-1000090001
-1000000001
-1111111111
-```
 
 ---
 
@@ -133,11 +116,11 @@ Esses caracteres **não representam blocos sólidos**, servem apenas como ponto 
 
 | Caractere | Tipo de inimigo |
 |----------|----------------|
-| `J` | Inimigo tipo J |
-| `T` | Inimigo tipo T |
-| `M` | Inimigo tipo M |
-| `K` | Inimigo tipo K |
-| `G` | Inimigo tipo G |
+| `E` | Dollynho |
+| `F` | Barriguinha Mole |
+| `G` | Baianinho da Casas Bahia (o antigo) |
+| `I` | Zé Gotinha |
+| `J` | Hulk Magrelo |
 
 Após o carregamento do mapa, o caractere é convertido para piso e a entidade é criada separadamente.
 
@@ -150,7 +133,7 @@ Os itens também são definidos diretamente no mapa e funcionam como pontos de s
 | Caractere | Item | Descrição |
 |----------|-----|-----------|
 | `H` | Health | Recupera vida do jogador |
-| `A` | Ammo | Recupera munição |
+| `K` | Key | Chave para desbloquear porta |
 
 - não geram geometria,
 - não bloqueiam passagem,
