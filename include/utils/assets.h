@@ -5,7 +5,10 @@ struct GameAssets
 {
     // texturas
     GLuint texMenuBG = 0;
-    GLuint texChao = 0;
+    GLuint texChao1 = 0;
+    GLuint texChao2 = 0;
+    GLuint texChao3 = 0;
+    GLuint texChao4 = 0;
     GLuint texParede = 0;
     GLuint texSangue = 0;
     GLuint texLava = 0;

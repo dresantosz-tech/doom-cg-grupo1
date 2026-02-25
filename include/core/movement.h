@@ -1,3 +1,3 @@
 #pragma once
 
-void atualizaMovimento();
+void atualizaMovimento(float dt);

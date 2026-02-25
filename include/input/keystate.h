@@ -5,6 +5,7 @@ extern bool keyW;
 extern bool keyA;
 extern bool keyS;
 extern bool keyD;
+extern bool keyShift;
 
 // Mouse / warp
 extern bool ignoreWarp;

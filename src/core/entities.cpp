@@ -132,8 +132,8 @@ void updateEntities(float dt)
             }
             else if (item.type == ITEM_AMMO)
             {
-                item.respawnTimer = 999999.0f;
-                g.player.reserveAmmo = 20;
+                item.respawnTimer = 15.0f;
+                g.player.stamina = 100.0f;
             }
         }
     }

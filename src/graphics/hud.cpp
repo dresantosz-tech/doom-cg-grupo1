@@ -4,6 +4,7 @@
 #include <GL/glut.h>
 #include <string>
 #include <cstdlib>
+#include <cmath>
 
 static void begin2D(int w, int h)
 {
@@ -28,31 +29,31 @@ static void end2D()
     glMatrixMode(GL_MODELVIEW);
 }
 
-static void drawCrosshair(int w, int h)
-{
-    glPushAttrib(GL_ENABLE_BIT);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_TEXTURE_2D);
+// static void drawCrosshair(int w, int h)
+// {
+//     glPushAttrib(GL_ENABLE_BIT);
+//     glDisable(GL_DEPTH_TEST);
+//     glDisable(GL_LIGHTING);
+//     glDisable(GL_TEXTURE_2D);
 
-    begin2D(w, h);
+//     begin2D(w, h);
 
-    glColor3f(0.0f, 1.0f, 0.0f);
-    glLineWidth(2.0f);
+//     glColor3f(0.0f, 1.0f, 0.0f);
+//     glLineWidth(2.0f);
 
-    float cx = w / 2.0f;
-    float cy = h / 2.0f;
-    float size = 10.0f;
+//     float cx = w / 2.0f;
+//     float cy = h / 2.0f;
+//     float size = 10.0f;
 
-    glBegin(GL_LINES);
-    glVertex2f(cx - size, cy); glVertex2f(cx + size, cy);
-    glVertex2f(cx, cy - size); glVertex2f(cx, cy + size);
-    glEnd();
+//     glBegin(GL_LINES);
+//     glVertex2f(cx - size, cy); glVertex2f(cx + size, cy);
+//     glVertex2f(cx, cy - size); glVertex2f(cx, cy + size);
+//     glEnd();
 
-    end2D();
+//     end2D();
 
-    glPopAttrib();
-}
+//     glPopAttrib();
+// }
 
 static void drawDamageOverlay(int w, int h, GLuint texDamage, float alpha)
 {
@@ -110,9 +111,12 @@ static void drawHealthOverlay(int w, int h, GLuint texHealth, float alpha)
     end2D();
 }
 
-static void drawWeaponHUD(int w, int h, const HudTextures& tex, WeaponState ws)
+static float computeBobbingOffsetY(const HudState& s);
+
+static void drawWeaponHUD(int w, int h, const HudTextures& tex, const HudState& s)
 {
     GLuint currentTex = tex.texGunDefault;
+    WeaponState ws = s.weaponState;
 
     if (ws == WeaponState::W_FIRE_1 || ws == WeaponState::W_RETURN) currentTex = tex.texGunFire1;
     else if (ws == WeaponState::W_FIRE_2) currentTex = tex.texGunFire2;
@@ -144,6 +148,8 @@ static void drawWeaponHUD(int w, int h, const HudTextures& tex, WeaponState ws)
         x += (float)(std::rand() % 10 - 5);
     }
 
+    y += computeBobbingOffsetY(s);
+
     glBegin(GL_QUADS);
     glTexCoord2f(0, 1); glVertex2f(x, y);
     glTexCoord2f(1, 1); glVertex2f(x + gunW, y);
@@ -154,6 +160,22 @@ static void drawWeaponHUD(int w, int h, const HudTextures& tex, WeaponState ws)
     glDisable(GL_BLEND);
 
     end2D();
+}
+
+static float computeBobbingOffsetY(const HudState& s)
+{
+    if (!s.isMoving)
+        return 0.0f;
+
+    const float pi = 3.14159265f;
+    const float walkFreqHz = 2.2f;
+    const float sprintFreqHz = 4.0f;
+    const float walkAmp = 8.0f;
+    const float sprintAmp = 11.0f;
+
+    const float freq = s.isSprinting ? sprintFreqHz : walkFreqHz;
+    const float amp = s.isSprinting ? sprintAmp : walkAmp;
+    return std::sin(s.gameTime * freq * 2.0f * pi) * amp;
 }
 
 static void drawDoomBar(int w, int h, const HudTextures& tex, const HudState& s)
@@ -199,10 +221,10 @@ static void drawDoomBar(int w, int h, const HudTextures& tex, const HudState& s)
 
     // texto
     float scaleLbl = 0.0018f * hBar;
-    float scaleNum = 0.0035f * hBar;
+    //float scaleNum = 0.0035f * hBar;
 
     float colLbl[3] = {1.0f, 0.8f, 0.5f};
-    float colNum[3] = {0.8f, 0.0f, 0.0f};
+    //float colNum[3] = {0.8f, 0.0f, 0.0f};
 
     // HEALTH label
     float xTextHealth = w * 0.08f;
@@ -237,52 +259,82 @@ static void drawDoomBar(int w, int h, const HudTextures& tex, const HudState& s)
     glVertex2f(barX, barY + barH);
     glEnd();
 
+    // STAMINA label
+    float xTextStamina = w * 0.58f;
+    float yLblStamina = hBar * 0.35f;
+    glColor3fv(colLbl);
+    uiDrawStrokeText(xTextStamina, yLblStamina, "STAMINA", scaleLbl);
+
+    // barra stamina
+    float stBarX = xTextStamina + (w * 0.10f);
+    float stBarMaxW = (w * 0.95f) - stBarX;
+
+    glColor4f(0, 0, 0, 1);
+    glBegin(GL_QUADS);
+    glVertex2f(stBarX, barY); glVertex2f(stBarX + stBarMaxW, barY);
+    glVertex2f(stBarX + stBarMaxW, barY + barH); glVertex2f(stBarX, barY + barH);
+    glEnd();
+
+    float staminaPct = (float)s.playerStamina / 100.0f;
+    if (staminaPct < 0) staminaPct = 0;
+    if (staminaPct > 1) staminaPct = 1;
+
+    if (staminaPct > 0.6f) glColor3f(0.0f, 0.7f, 1.0f);
+    else if (staminaPct > 0.3f) glColor3f(1.0f, 0.8f, 0.0f);
+    else glColor3f(0.9f, 0.2f, 0.1f);
+
+    glBegin(GL_QUADS);
+    glVertex2f(stBarX, barY);
+    glVertex2f(stBarX + (stBarMaxW * staminaPct), barY);
+    glVertex2f(stBarX + (stBarMaxW * staminaPct), barY + barH);
+    glVertex2f(stBarX, barY + barH);
+    glEnd();
     // arma ícone
-    if (tex.texGunHUD != 0)
-    {
-        glEnable(GL_TEXTURE_2D);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glColor3f(1, 1, 1);
+    // if (tex.texGunHUD != 0)
+    // {
+    //     glEnable(GL_TEXTURE_2D);
+    //     glEnable(GL_BLEND);
+    //     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //     glColor3f(1, 1, 1);
 
-        float iconSize = hBar * 1.5f;
-        float iconY = (hBar - iconSize) / 2.0f + (hBar * 0.1f);
+    //     float iconSize = hBar * 1.5f;
+    //     float iconY = (hBar - iconSize) / 2.0f + (hBar * 0.1f);
 
-        glBindTexture(GL_TEXTURE_2D, tex.texGunHUD);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    //     glBindTexture(GL_TEXTURE_2D, tex.texGunHUD);
+    //     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        float weaponWidth = iconSize * 2.2f;
-        float xIconGun = (w * 0.75f) - (weaponWidth / 2.0f);
+    //     float weaponWidth = iconSize * 2.2f;
+    //     float xIconGun = (w * 0.75f) - (weaponWidth / 2.0f);
 
-        glBegin(GL_QUADS);
-        glTexCoord2f(0, 1); glVertex2f(xIconGun, iconY);
-        glTexCoord2f(1, 1); glVertex2f(xIconGun + weaponWidth, iconY);
-        glTexCoord2f(1, 0); glVertex2f(xIconGun + weaponWidth, iconY + iconSize);
-        glTexCoord2f(0, 0); glVertex2f(xIconGun, iconY + iconSize);
-        glEnd();
+    //     glBegin(GL_QUADS);
+    //     glTexCoord2f(0, 1); glVertex2f(xIconGun, iconY);
+    //     glTexCoord2f(1, 1); glVertex2f(xIconGun + weaponWidth, iconY);
+    //     glTexCoord2f(1, 0); glVertex2f(xIconGun + weaponWidth, iconY + iconSize);
+    //     glTexCoord2f(0, 0); glVertex2f(xIconGun, iconY + iconSize);
+    //     glEnd();
 
-        glDisable(GL_BLEND);
-        glDisable(GL_TEXTURE_2D);
+    //     glDisable(GL_BLEND);
+    //     glDisable(GL_TEXTURE_2D);
 
-        // AMMO número + label
-        float xAmmoBlock = xIconGun + weaponWidth + 10.0f;
-        float yNum = hBar * 0.50f;
-        float xNum = xAmmoBlock + 5.0f;
+    //     // AMMO número + label
+    //     float xAmmoBlock = xIconGun + weaponWidth + 10.0f;
+    //     float yNum = hBar * 0.50f;
+    //     float xNum = xAmmoBlock + 5.0f;
 
-        glColor3fv(colNum);
-        glPushMatrix();
-        glTranslatef(xNum, yNum, 0);
-        glScalef(scaleNum, scaleNum, 1);
-        {
-            std::string sAmmo = std::to_string(s.currentAmmo);
-            for (char c : sAmmo) glutStrokeCharacter(GLUT_STROKE_MONO_ROMAN, c);
-        }
-        glPopMatrix();
+    //     glColor3fv(colNum);
+    //     glPushMatrix();
+    //     glTranslatef(xNum, yNum, 0);
+    //     glScalef(scaleNum, scaleNum, 1);
+    //     {
+    //         std::string sAmmo = std::to_string(s.currentAmmo);
+    //         for (char c : sAmmo) glutStrokeCharacter(GLUT_STROKE_MONO_ROMAN, c);
+    //     }
+    //     glPopMatrix();
 
-        glColor3fv(colLbl);
-        uiDrawStrokeText(xAmmoBlock, hBar * 0.20f, "AMMO", scaleLbl);
-    }
+    //     glColor3fv(colLbl);
+    //     uiDrawStrokeText(xAmmoBlock, hBar * 0.20f, "AMMO", scaleLbl);
+    // }
 
     end2D();
     glPopAttrib();
@@ -293,15 +345,15 @@ void hudRenderAll(
     int screenH,
     const HudTextures& tex,
     const HudState& state,
-    bool showCrosshair,
+    //bool showCrosshair,
     bool showWeapon,
     bool showDoomBar)
 {
     // Ordem: arma -> barra -> mira -> overlays
-    if (showWeapon)  drawWeaponHUD(screenW, screenH, tex, state.weaponState);
+    if (showWeapon)  drawWeaponHUD(screenW, screenH, tex, state);
     if (showDoomBar) drawDoomBar(screenW, screenH, tex, state);
 
-    if (showCrosshair) drawCrosshair(screenW, screenH);
+    //if (showCrosshair) drawCrosshair(screenW, screenH);
 
     drawDamageOverlay(screenW, screenH, tex.texDamage, state.damageAlpha);
     drawHealthOverlay(screenW, screenH, tex.texHealthOverlay, state.healthAlpha);

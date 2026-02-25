@@ -22,8 +22,12 @@ struct HudTextures
 struct HudState
 {
     int playerHealth = 100;
-    int currentAmmo = 0;
-    int reserveAmmo = 0;
+    int playerStamina = 100;
+    bool isMoving = false;
+    bool isSprinting = false;
+    float gameTime = 0.0f;
+    // int currentAmmo = 0;
+    // int reserveAmmo = 0;
 
     float damageAlpha = 0.0f;
     float healthAlpha = 0.0f;

@@ -411,12 +411,12 @@ void drawLevel(const MapLoader &map, float px, float pz, float dx, float dz, con
                 }
                 else
                 {
-                    desenhaTileChao(wx, wz, r.texChao, false);
+                    desenhaTileChao(wx, wz, r.texChao1, false);
                 }
             }
             else if (c == '0')
             {
-                desenhaTileChao(wx, wz, r.texChao, false);
+                desenhaTileChao(wx, wz, r.texChao1, false);
             }
             else if (c == '3')
             {

@@ -21,7 +21,6 @@
 #include "graphics/lighting.h"
 
 #include "core/movement.h"
-#include "core/player.h"
 #include "core/entities.h"
 
 #include "audio/audio_system.h"
@@ -36,8 +35,6 @@
 
 static HudTextures gHudTex;
 static GameContext g;
-
-constexpr int MAX_MAGAZINE = 12;
 
 // --- Assets / Level ---
 static GameAssets gAssets;
@@ -76,7 +73,10 @@ bool gameInit(const char *mapPath)
     if (!loadAssets(gAssets))
         return false;
 
-    g.r.texChao = gAssets.texChao;
+    g.r.texChao1 = gAssets.texChao1;
+    g.r.texChao2 = gAssets.texChao2;
+    g.r.texChao3 = gAssets.texChao3;
+    g.r.texChao4 = gAssets.texChao4;
     g.r.texParede = gAssets.texParede;
     g.r.texSangue = gAssets.texSangue;
     g.r.texLava = gAssets.texLava;
@@ -120,6 +120,8 @@ bool gameInit(const char *mapPath)
 
     glutKeyboardFunc(keyboard);
     glutKeyboardUpFunc(keyboardUp);
+    glutSpecialFunc(specialDown);
+    glutSpecialUpFunc(specialUp);
     glutPassiveMotionFunc(mouseMotion);
     glutSetCursor(GLUT_CURSOR_NONE);
 
@@ -129,7 +131,6 @@ bool gameInit(const char *mapPath)
     g.state = GameState::MENU_INICIAL;
     g.time = 0.0f;
     g.player = PlayerState{};
-    g.weapon = WeaponAnim{};
 
     return true;
 }
@@ -138,14 +139,11 @@ bool gameInit(const char *mapPath)
 void gameReset()
 {
     g.player.health = 100;
-    g.player.currentAmmo = 12;
-    g.player.reserveAmmo = 25;
+    g.player.stamina = 100.0f;
 
     g.player.damageAlpha = 0.0f;
     g.player.healthAlpha = 0.0f;
 
-    g.weapon.state = WeaponState::W_IDLE;
-    g.weapon.timer = 0.0f;
     // Respawna o jogador
     applySpawn(gLevel, camX, camZ);
 }
@@ -160,7 +158,7 @@ void gameUpdate(float dt)
         return;
     }
 
-    atualizaMovimento();
+    atualizaMovimento(dt);
 
     AudioListener L;
     L.pos = {camX, camY, camZ};
@@ -189,7 +187,6 @@ void gameUpdate(float dt)
     }
 
     updateEntities(dt);
-    updateWeaponAnim(dt);
 
     // 3. CHECAGEM DE GAME OVER
     if (g.player.health <= 0)
@@ -233,11 +230,12 @@ void gameRender()
     // Monta o estado do HUD a partir das variáveis globais do jogo
     HudState hs;
     hs.playerHealth = g.player.health;
-    hs.currentAmmo = g.player.currentAmmo;
-    hs.reserveAmmo = g.player.reserveAmmo;
+    hs.playerStamina = (int)g.player.stamina;
+    hs.isMoving = (keyW || keyA || keyS || keyD);
+    hs.isSprinting = hs.isMoving && keyShift && (g.player.stamina > 0.0f);
+    hs.gameTime = g.time;
     hs.damageAlpha = g.player.damageAlpha;
     hs.healthAlpha = g.player.healthAlpha;
-    hs.weaponState = g.weapon.state;
 
     // --- ESTADO: MENU INICIAL ---
     if (g.state == GameState::MENU_INICIAL)
@@ -283,3 +281,4 @@ void gameRender()
 
     glutSwapBuffers();
 }
+

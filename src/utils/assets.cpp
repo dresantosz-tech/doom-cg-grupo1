@@ -7,7 +7,10 @@ bool loadAssets(GameAssets &a)
 {
     a.texMenuBG = carregaTextura("assets/menu_bg.png");
 
-    a.texChao = carregaTextura("assets/181.png");
+    a.texChao1 = carregaTextura("assets/firstMapGround.png");
+    a.texChao2 = carregaTextura("assets/secondMapGround.png");
+    a.texChao3 = carregaTextura("assets/lastMapGround.png");
+    a.texChao4 = carregaTextura("assets/lastMapGround2.png");
     a.texParede = carregaTextura("assets/091.png");
     a.texSangue = carregaTextura("assets/016.png");
     a.texLava = carregaTextura("assets/179.png");
@@ -43,11 +46,11 @@ bool loadAssets(GameAssets &a)
     a.texEnemiesDamage[4] = carregaTextura("assets/enemies/enemyRageDamage5.png");
 
     a.texHealthOverlay = carregaTextura("assets/heal.png");
-    a.texGunDefault = carregaTextura("assets/gun_default.png");
-    a.texGunFire1 = carregaTextura("assets/gun_fire1.png");
-    a.texGunFire2 = carregaTextura("assets/gun_fire2.png");
-    a.texGunReload1 = carregaTextura("assets/gun_reload1.png");
-    a.texGunReload2 = carregaTextura("assets/gun_reload2.png");
+    a.texGunDefault = carregaTextura("assets/hand-POV.png");
+    a.texGunFire1 = a.texGunDefault;
+    a.texGunFire2 = a.texGunDefault;
+    a.texGunReload1 = a.texGunDefault;
+    a.texGunReload2 = a.texGunDefault;
     a.texDamage = carregaTextura("assets/damage.png");
 
     a.texHealth = carregaTextura("assets/health.png");
@@ -55,10 +58,10 @@ bool loadAssets(GameAssets &a)
 
     a.texSkydome = carregaTextura("assets/Va4wUMQ.png");
 
-    a.texGunHUD = carregaTextura("assets/Shotgun.png");
+    a.texGunHUD = a.texGunDefault;
     a.texHudFundo = carregaTextura("assets/088.png");
 
-    if (!a.texChao || !a.texParede || !a.texSangue || !a.texLava || !a.progSangue ||
+    if (!a.texChao1 || !a.texChao2 || !a.texChao3 || !a.texChao4 || !a.texParede || !a.texSangue || !a.texLava || !a.progSangue ||
         !a.progLava || !a.texHealth || !a.texGunDefault || !a.texGunFire1 ||
         !a.texGunFire2 || !a.texSkydome || !a.texGunReload1 || !a.texGunReload2 ||
         !a.texDamage || !a.texAmmo || !a.texHealthOverlay || !a.texEnemies[0] ||

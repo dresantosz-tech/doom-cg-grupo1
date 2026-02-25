@@ -1,17 +1,21 @@
 #include <cmath>
-#include "core/game.h"
-
-#include "core/movement.h"
-#include "input/keystate.h"
-#include "core/camera.h"
-
-#include "core/config.h"
-#include "level/levelmetrics.h"
-#include "core/camera.h"
-#include "core/window.h"
 
 #include <GL/glew.h>
 #include <GL/glut.h>
+
+#include "core/game.h"
+#include "core/movement.h"
+#include "input/keystate.h"
+#include "core/camera.h"
+#include "core/config.h"
+#include "level/levelmetrics.h"
+#include "core/window.h"
+
+static constexpr float SPRINT_MULTIPLIER = 1.8f;
+static constexpr float STAMINA_CONSUMPTION_PER_SEC = 40.0f;
+static constexpr float STAMINA_RECOVERY_PER_SEC = 10.0f;
+static constexpr float STAMINA_MIN = 0.0f;
+static constexpr float STAMINA_MAX = 100.0f;
 
 static bool isWallTile(int tx, int tz)
 {
@@ -22,7 +26,6 @@ static bool isWallTile(int tx, int tz)
         return false;
 
     char c = data[tz][tx];
-    // Adicione E, H, A como liberados
     if (c == 'E' || c == 'H' || c == 'A')
         return false;
 
@@ -79,9 +82,30 @@ static bool canMoveTo(float nx, float nz)
     return true;
 }
 
-void atualizaMovimento()
+void atualizaMovimento(float dt)
 {
-    float passo = GameConfig::PLAYER_STEPS;
+    auto &g = gameContext();
+
+    const bool movingInput = keyW || keyA || keyS || keyD;
+    bool sprinting = movingInput && keyShift && g.player.stamina > STAMINA_MIN;
+
+    if (sprinting)
+    {
+        g.player.stamina -= STAMINA_CONSUMPTION_PER_SEC * dt;
+        if (g.player.stamina <= STAMINA_MIN)
+        {
+            g.player.stamina = STAMINA_MIN;
+            sprinting = false;
+        }
+    }
+    else
+    {
+        g.player.stamina += STAMINA_RECOVERY_PER_SEC * dt;
+        if (g.player.stamina > STAMINA_MAX)
+            g.player.stamina = STAMINA_MAX;
+    }
+
+    float passo = GameConfig::PLAYER_STEPS * (sprinting ? SPRINT_MULTIPLIER : 1.0f);
 
     float radYaw = yaw * 3.14159265f / 180.0f;
     float dirX = std::sin(radYaw);
@@ -117,7 +141,6 @@ void atualizaMovimento()
     if (dx == 0.0f && dz == 0.0f)
         return;
 
-    // normaliza pra não andar mais rápido na diagonal
     float len = std::sqrt(dx * dx + dz * dz);
     if (len > 0.0f)
     {
@@ -125,7 +148,6 @@ void atualizaMovimento()
         dz = (dz / len) * passo;
     }
 
-    // slide por eixo (menos “travadas”)
     float nx = camX + dx;
     if (canMoveTo(nx, camZ))
         camX = nx;

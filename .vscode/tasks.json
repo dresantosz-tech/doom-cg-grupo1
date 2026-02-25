@@ -2,10 +2,16 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build DoomLike (make)",
+            "label": "Build DoomLike (g++ MSYS2)",
             "type": "shell",
-            "command": "make",
-            "args": [],
+            "command": "powershell",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                "$ErrorActionPreference='Stop'; New-Item -ItemType Directory -Force -Path build | Out-Null; $src = Get-ChildItem -Path src -Recurse -Filter *.cpp | ForEach-Object { $_.FullName }; $all = @($src + (Join-Path $PWD 'main.cpp')); & 'C:/msys64/mingw64/bin/g++.exe' -g -O0 -Wall -Wextra -Iinclude @all -o build/DoomLike.exe -lglew32 -lfreeglut -lopengl32 -lglu32 -lopenal; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; Copy-Item -Recurse -Force assets build/; Copy-Item -Recurse -Force maps build/; Copy-Item -Recurse -Force shaders build/; if (Test-Path 'C:/msys64/mingw64/bin/libopenal-1.dll') { Copy-Item -Force 'C:/msys64/mingw64/bin/libopenal-1.dll' build/ }; if (Test-Path 'C:/msys64/mingw64/bin/OpenAL32.dll') { Copy-Item -Force 'C:/msys64/mingw64/bin/OpenAL32.dll' build/ }"
+            ],
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -46,6 +52,7 @@
                 "-lGLEW",
                 "-lGL",
                 "-lGLU",
+                "-lopenal",
                 "-lglut"
             ],
             "options": {
@@ -62,3 +69,4 @@
         }
     ]
 }
+
