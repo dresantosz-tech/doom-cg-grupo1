@@ -20,7 +20,7 @@ bool isWalkable(float x, float z)
     if (tx < 0 || tx >= (int)data[tz].size()) return false;
 
     char c = data[tz][tx];
-    if (c == '#' || c == 'D') return false;
+    if (c == 'Z' || c == 'D') return false;
 
     return true;
 }

@@ -23,7 +23,7 @@ struct PlayerState
 struct RenderAssets
 {
     GLuint texChao1 = 0, texChao2 = 0, texChao3 = 0, texChao4 = 0, texParede1 = 0, texParede2 = 0, texParede3 = 0, texPorta = 0, texSangue = 0, texLava = 0;
-    GLuint texChaoInterno = 0, texParedeInterna = 0, texTeto = 0, texTeto2 = 0, texTeto3 = 0, texSkydome = 0, texMenuBG = 0, texEndBG = 0;
+    GLuint texChaoInterno = 0, texParedeInterna = 0, texTeto2 = 0, texTeto3 = 0, texSkydome = 0, texMenuBG = 0, texEndBG = 0;
     int mapTheme = 1; // 1=map1, 2=map2, 3=map3
     // GLuint texSkydome=0;
 

@@ -27,7 +27,7 @@ static bool isWallTile(int tx, int tz)
         return false;
 
     char c = data[tz][tx];
-    if (c == '#')
+    if (c == 'Z')
         return true;
     if (c == 'D' && !g.player.hasKey)
         return true;

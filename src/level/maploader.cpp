@@ -22,7 +22,7 @@ bool MapLoader::load(const char* filename) {
             line.pop_back();
 
         // ignora linhas vazias ou comentários
-        if (line.empty() || line[0] == '#')
+        if (line.empty())
             continue;
 
         // detecta spawn 'P'

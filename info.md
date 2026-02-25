@@ -5,7 +5,7 @@
 
 ## Setup dos Mapas
 
-|'#' = parede|
+|Z = parede|
 |. = chão livre|
 |, = chão e teto|
 

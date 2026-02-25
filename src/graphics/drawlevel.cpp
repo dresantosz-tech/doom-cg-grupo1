@@ -438,10 +438,10 @@ void drawLevel(const MapLoader &map, float px, float pz, float dx, float dz, con
             char c = data[z][x];
 
             // Nova legenda dos mapas:
-            // '#' = parede
+            // 'Z' = parede
             // '.' = chao
             // ',' = chao + teto
-            if (c == '#')
+            if (c == 'Z')
             {
                 desenhaParedeCuboCompleto(wx, wz, wallTex);
                 continue;
