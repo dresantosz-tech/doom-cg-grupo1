@@ -2,6 +2,7 @@
 
 bool isWalkable(float x, float z);
 void updateEntities(float dt);
+void playerTryInteract();
 
 // Configurações da IA
 const float ENEMY_SPEED = 2.5f;
@@ -40,7 +41,8 @@ enum ItemType
 {
     ITEM_HEALTH,
     ITEM_AMMO,
-    ITEM_AMMO_BOX
+    ITEM_AMMO_BOX,
+    ITEM_KEY
 };
 
 struct Item

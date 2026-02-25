@@ -20,7 +20,7 @@ bool isWalkable(float x, float z)
     if (tx < 0 || tx >= (int)data[tz].size()) return false;
 
     char c = data[tz][tx];
-    if (c == '1' || c == '2') return false;
+    if (c == '#' || c == 'D') return false;
 
     return true;
 }
@@ -121,6 +121,9 @@ void updateEntities(float dt)
 
         if (dx * dx + dz * dz < 1.0f)
         {
+            if (item.type == ITEM_KEY)
+                continue;
+
             item.active = false;
 
             if (item.type == ITEM_HEALTH)
@@ -136,5 +139,27 @@ void updateEntities(float dt)
                 g.player.stamina = 100.0f;
             }
         }
+    }
+}
+
+void playerTryInteract()
+{
+    auto &g = gameContext();
+    auto &lvl = gameLevel();
+
+    for (auto &item : lvl.items)
+    {
+        if (!item.active || item.type != ITEM_KEY)
+            continue;
+
+        float dx = camX - item.x;
+        float dz = camZ - item.z;
+        if (dx * dx + dz * dz > 2.25f) // raio de interacao ~= 1.5
+            continue;
+
+        item.active = false;
+        item.respawnTimer = 999999.0f;
+        g.player.hasKey = true;
+        break;
     }
 }

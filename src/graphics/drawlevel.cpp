@@ -177,7 +177,7 @@ static void desenhaQuadChao(float x, float z, float tile, float tilesUV)
     glEnd();
 }
 
-static void desenhaTileChao(float x, float z, GLuint texChaoX, bool temTeto)
+static void desenhaTileChao(float x, float z, GLuint texChaoX, bool temTeto, GLuint texTetoX)
 {
     glUseProgram(0);
     glColor3f(1, 1, 1);
@@ -187,9 +187,9 @@ static void desenhaTileChao(float x, float z, GLuint texChaoX, bool temTeto)
 
     desenhaQuadChao(x, z, TILE, 2.0f);
 
-    if (temTeto)
+    if (temTeto && texTetoX != 0)
     {
-        glBindTexture(GL_TEXTURE_2D, texChaoX);
+        glBindTexture(GL_TEXTURE_2D, texTetoX);
         desenhaQuadTeto(x, z, TILE, 2.0f);
     }
 }
@@ -330,6 +330,40 @@ static void desenhaTileSangue(float x, float z, const RenderAssets &r, float tim
     glUseProgram(0);
 }
 
+static void desenhaTileSaida(float x, float z, GLuint texBase, const RenderAssets &r, float time)
+{
+    if (r.progExit == 0)
+    {
+        desenhaTileChao(x, z, texBase, false, 0);
+        return;
+    }
+
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glUseProgram(r.progExit);
+
+    GLint locTex = glGetUniformLocation(r.progExit, "uTexture");
+    GLint locTime = glGetUniformLocation(r.progExit, "uTime");
+    GLint locThreshold = glGetUniformLocation(r.progExit, "threshold");
+    GLint locError = glGetUniformLocation(r.progExit, "error_correction");
+    GLint locColor = glGetUniformLocation(r.progExit, "color");
+
+    bindTexture0(texBase);
+    glUniform1i(locTex, 0);
+    glUniform1f(locTime, time);
+    glUniform1f(locThreshold, -0.6f);
+    glUniform1f(locError, 0.9f);
+    glUniform4f(locColor, 0.1f, 0.95f, 0.2f, 1.0f);
+
+    desenhaQuadChao(x, z, TILE, 2.0f);
+
+    glUseProgram(0);
+    glDisable(GL_BLEND);
+    glEnable(GL_LIGHTING);
+}
+
 // --- Checa vizinhos ---
 static char getTileAt(const MapLoader &map, int tx, int tz)
 {
@@ -371,6 +405,22 @@ void drawLevel(const MapLoader &map, float px, float pz, float dx, float dz, con
 
     LevelMetrics m = LevelMetrics::fromMap(map, TILE);
 
+    GLuint wallTex = r.texParede1;
+    GLuint floorTex = r.texChao1;
+    GLuint ceilTex = 0;
+    if (r.mapTheme == 2)
+    {
+        wallTex = r.texParede2;
+        floorTex = r.texChao2;
+        ceilTex = r.texTeto2;
+    }
+    else if (r.mapTheme == 3)
+    {
+        wallTex = r.texParede3;
+        floorTex = r.texChao3;
+        ceilTex = r.texTeto3;
+    }
+
     float fwdx, fwdz;
     bool hasFwd = getForwardXZ(dx, dz, fwdx, fwdz);
 
@@ -387,67 +437,34 @@ void drawLevel(const MapLoader &map, float px, float pz, float dx, float dz, con
 
             char c = data[z][x];
 
-            bool isEntity = (c == 'J' || c == 'T' || c == 'M' || c == 'K' ||
-                             c == 'G' || c == 'H' || c == 'A' || c == 'E' ||
-                             c == 'F' || c == 'I');
+            // Nova legenda dos mapas:
+            // '#' = parede
+            // '.' = chao
+            // ',' = chao + teto
+            if (c == '#')
+            {
+                desenhaParedeCuboCompleto(wx, wz, wallTex);
+                continue;
+            }
+            if (c == 'D')
+            {
+                GLuint doorTex = (r.texPorta != 0) ? r.texPorta : wallTex;
+                desenhaParedeCuboCompleto(wx, wz, doorTex);
+                continue;
+            }
+            if (c == 'S')
+            {
+                desenhaTileSaida(wx, wz, floorTex, r, time);
+                continue;
+            }
 
-            if (isEntity)
-            {
-                char viz1 = getTileAt(map, x + 1, z);
-                char viz2 = getTileAt(map, x - 1, z);
-                char viz3 = getTileAt(map, x, z + 1);
-                char viz4 = getTileAt(map, x, z - 1);
+            const bool hasCeiling = (c == ',');
+            desenhaTileChao(wx, wz, floorTex, hasCeiling, ceilTex);
 
-                bool isIndoor = (viz1 == '3' || viz1 == '2' ||
-                                 viz2 == '3' || viz2 == '2' ||
-                                 viz3 == '3' || viz3 == '2' ||
-                                 viz4 == '3' || viz4 == '2');
-
-                if (isIndoor)
-                {
-                    beginIndoor(wx, wz, time);
-                    desenhaTileChao(wx, wz, r.texChaoInterno, true);
-                    endIndoor();
-                }
-                else
-                {
-                    desenhaTileChao(wx, wz, r.texChao1, false);
-                }
-            }
-            else if (c == '0')
-            {
-                desenhaTileChao(wx, wz, r.texChao1, false);
-            }
-            else if (c == '3')
-            {
-                beginIndoor(wx, wz, time);
-                desenhaTileChao(wx, wz, r.texChaoInterno, true);
-                endIndoor();
-            }
-            else if (c == '1')
-            {
-                desenhaParedeCuboCompleto(wx, wz, r.texParede);
-            }
-            else if (c == '2')
-            {
-                char vizFrente = getTileAt(map, x, z + 1);
-                char vizTras = getTileAt(map, x, z - 1);
-                char vizDireita = getTileAt(map, x + 1, z);
-                char vizEsq = getTileAt(map, x - 1, z);
-
-                drawFace(wx, wz, 0, vizFrente, r.texParedeInterna, time);
-                drawFace(wx, wz, 1, vizTras, r.texParedeInterna, time);
-                drawFace(wx, wz, 2, vizDireita, r.texParedeInterna, time);
-                drawFace(wx, wz, 3, vizEsq, r.texParedeInterna, time);
-            }
-            else if (c == 'L')
-            {
+            if (c == 'L')
                 desenhaTileLava(wx, wz, r, time);
-            }
             else if (c == 'B')
-            {
                 desenhaTileSangue(wx, wz, r, time);
-            }
         }
     }
 }
@@ -518,7 +535,7 @@ void drawEntities(const std::vector<Enemy> &enemies, const std::vector<Item> &it
 
         if (item.type == ITEM_HEALTH)
             drawSprite(item.x, item.z, 0.7f, 0.7f, r.texHealth, camX, camZ);
-        else if (item.type == ITEM_AMMO)
+        else if (item.type == ITEM_AMMO || item.type == ITEM_KEY)
             drawSprite(item.x, item.z, 0.7f, 0.7f, r.texAmmo, camX, camZ);
     }
 

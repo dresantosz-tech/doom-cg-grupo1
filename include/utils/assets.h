@@ -18,7 +18,6 @@ struct GameAssets
     GLuint texLava = 0;
     GLuint texChaoInterno = 0;
     GLuint texParedeInterna = 0;
-    GLuint texTeto1 = 0;
     GLuint texTeto2 = 0;
     GLuint texTeto3 = 0;
     GLuint texEnemy = 0;
@@ -44,6 +43,7 @@ struct GameAssets
     // shaders
     GLuint progSangue = 0;
     GLuint progLava = 0;
+    GLuint progExit = 0;
 
     GLuint texSkydome = 0;
 };

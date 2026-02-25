@@ -289,6 +289,30 @@ static void drawDoomBar(int w, int h, const HudTextures& tex, const HudState& s)
     glVertex2f(stBarX + (stBarMaxW * staminaPct), barY + barH);
     glVertex2f(stBarX, barY + barH);
     glEnd();
+
+    if (s.hasKey && tex.texKeyIcon != 0)
+    {
+        glEnable(GL_TEXTURE_2D);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glColor3f(1, 1, 1);
+
+        float iconH = hBar * 0.70f;
+        float iconW = iconH;
+        float iconX = w - iconW - (w * 0.02f);
+        float iconY = (hBar - iconH) * 0.5f;
+
+        glBindTexture(GL_TEXTURE_2D, tex.texKeyIcon);
+        glBegin(GL_QUADS);
+        glTexCoord2f(0, 1); glVertex2f(iconX, iconY);
+        glTexCoord2f(1, 1); glVertex2f(iconX + iconW, iconY);
+        glTexCoord2f(1, 0); glVertex2f(iconX + iconW, iconY + iconH);
+        glTexCoord2f(0, 0); glVertex2f(iconX, iconY + iconH);
+        glEnd();
+
+        glDisable(GL_BLEND);
+        glDisable(GL_TEXTURE_2D);
+    }
     // arma ícone
     // if (tex.texGunHUD != 0)
     // {

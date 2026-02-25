@@ -7,6 +7,7 @@
 struct HudTextures
 {
     GLuint texHudFundo = 0;
+    GLuint texKeyIcon = 0;
     GLuint texGunHUD = 0;
 
     GLuint texGunDefault = 0;
@@ -23,6 +24,7 @@ struct HudState
 {
     int playerHealth = 100;
     int playerStamina = 100;
+    bool hasKey = false;
     bool isMoving = false;
     bool isSprinting = false;
     float gameTime = 0.0f;

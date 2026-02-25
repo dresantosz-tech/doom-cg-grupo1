@@ -86,6 +86,16 @@ bool loadLevel(Level &lvl, const char *mapPath, float tileSize)
                 i.respawnTimer = 0.0f;
                 lvl.items.push_back(i);
             }
+            else if (c == 'K') // Key
+            {
+                Item i;
+                i.x = wx;
+                i.z = wz;
+                i.type = ITEM_KEY;
+                i.active = true;
+                i.respawnTimer = 0.0f;
+                lvl.items.push_back(i);
+            }
             //  else if (c == 'A') // Ammo (Munição) (vou mudar aqui para identificar quando for pra pegar a chave)
             // {
             //     Item i;

@@ -73,6 +73,7 @@ static bool loadCurrentMapAndSpawn()
     if (!loadLevel(gLevel, kMapSequence[gCurrentMapIndex], GameConfig::TILE_SIZE))
         return false;
 
+    g.r.mapTheme = gCurrentMapIndex + 1;
     applySpawn(gLevel, camX, camZ);
     camY = GameConfig::PLAYER_EYE_Y;
     return true;
@@ -117,17 +118,23 @@ bool gameInit(const char *mapPath)
     g.r.texChao2 = gAssets.texChao2;
     g.r.texChao3 = gAssets.texChao3;
     g.r.texChao4 = gAssets.texChao4;
-    g.r.texParede = gAssets.texParede;
+    g.r.texParede1 = gAssets.texParede1;
+    g.r.texParede2 = gAssets.texParede2;
+    g.r.texParede3 = gAssets.texParede3;
+    g.r.texPorta = gAssets.texPorta;
     g.r.texSangue = gAssets.texSangue;
     g.r.texLava = gAssets.texLava;
     g.r.texChaoInterno = gAssets.texChaoInterno;
     g.r.texParedeInterna = gAssets.texParedeInterna;
-    g.r.texTeto = gAssets.texTeto;
+    g.r.texTeto2 = gAssets.texTeto2;
+    g.r.texTeto3 = gAssets.texTeto3;
 
     g.r.texSkydome = gAssets.texSkydome;
     g.r.texMenuBG = gAssets.texMenuBG;
+    g.r.texEndBG = gAssets.texEndBG;
 
     gHudTex.texHudFundo = gAssets.texHudFundo;
+    gHudTex.texKeyIcon = gAssets.texKey;
     gHudTex.texGunHUD = gAssets.texGunHUD;
 
     gHudTex.texGunDefault = gAssets.texGunDefault;
@@ -147,10 +154,11 @@ bool gameInit(const char *mapPath)
     }
 
     g.r.texHealth = gAssets.texHealth;
-    g.r.texAmmo = gAssets.texAmmo;
+    g.r.texAmmo = gAssets.texKey;
 
     g.r.progSangue = gAssets.progSangue;
     g.r.progLava = gAssets.progLava;
+    g.r.progExit = gAssets.progExit;
 
     (void)mapPath;
     gCurrentMapIndex = 0;
@@ -182,6 +190,7 @@ void gameReset()
 
     g.player.health = 100;
     g.player.stamina = 100.0f;
+    g.player.hasKey = false;
 
     g.player.damageAlpha = 0.0f;
     g.player.healthAlpha = 0.0f;
@@ -294,6 +303,7 @@ void gameRender()
     HudState hs;
     hs.playerHealth = g.player.health;
     hs.playerStamina = (int)g.player.stamina;
+    hs.hasKey = g.player.hasKey;
     hs.isMoving = (keyW || keyA || keyS || keyD);
     hs.isSprinting = hs.isMoving && keyShift && (g.player.stamina > 0.0f);
     hs.gameTime = g.time;
@@ -322,7 +332,9 @@ void gameRender()
     else if (g.state == GameState::VITORIA)
     {
         drawWorld3D();
-        menuRender(janelaW, janelaH, g.time, "VITORIA", "Pressione ENTER para Reiniciar", g.r);
+        RenderAssets endScreen = g.r;
+        endScreen.texMenuBG = g.r.texEndBG;
+        menuRender(janelaW, janelaH, g.time, "VITORIA", "Pressione ENTER para Reiniciar", endScreen);
     }
     // --- ESTADO: PAUSADO ---
     else if (g.state == GameState::PAUSADO)

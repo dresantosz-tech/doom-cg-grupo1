@@ -7,6 +7,7 @@
 #include "core/window.h"
 #include "graphics/menu.h"
 #include "core/game.h"
+#include "core/entities.h"
 
 void keyboard(unsigned char key, int, int)
 {
@@ -76,6 +77,10 @@ void keyboard(unsigned char key, int, int)
         case 'd':
         case 'D':
             keyD = true;
+            break;
+        case 'e':
+        case 'E':
+            playerTryInteract();
             break;
         }
     }

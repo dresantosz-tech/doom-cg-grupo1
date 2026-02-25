@@ -19,6 +19,7 @@ static constexpr float STAMINA_MAX = 100.0f;
 
 static bool isWallTile(int tx, int tz)
 {
+    const auto &g = gameContext();
     const auto &data = gameLevel().map.data();
     if (tz < 0 || tx < 0 || tz >= gameLevel().map.getHeight())
         return false;
@@ -26,10 +27,11 @@ static bool isWallTile(int tx, int tz)
         return false;
 
     char c = data[tz][tx];
-    if (c == 'E' || c == 'H' || c == 'A')
-        return false;
-
-    return (c == '1' || c == '2');
+    if (c == '#')
+        return true;
+    if (c == 'D' && !g.player.hasKey)
+        return true;
+    return false;
 }
 
 static bool pointIntersectsTile(float px, float pz, int tx, int tz, const LevelMetrics &m, float radius)
