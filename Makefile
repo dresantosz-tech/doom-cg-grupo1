@@ -1,67 +1,71 @@
-# DoomLike Makefile
-# - Compila .o em build/
-# - Linka o executavel em build/DoomLike(.exe no Windows)
-# - Copia assets/maps/shaders para dentro de build/ (build portatil)
-# - make run ja prepara tudo e executa
+# DoomLike Makefile (Windows + Linux)
+# - Build em build/DoomLike(.exe)
+# - Stage de assets/maps/shaders em build/
 
-CXX       := g++
-CXXFLAGS  := -g -O0 -Wall -Wextra -Iinclude
-LDFLAGS   :=
-TARGET    := DoomLike
+CXX      := g++
+CXXFLAGS := -g -O0 -Wall -Wextra -Iinclude
+LDFLAGS  :=
+TARGET   := DoomLike
+BUILD_DIR := build
+SRC_DIR  := src
+MAIN     := main.cpp
 
 ifeq ($(OS),Windows_NT)
-EXE_EXT   := .exe
-LDLIBS    := -lglew32 -lfreeglut -lopengl32 -lglu32 -lopenal
-RM_RF     := rm -rf
-CP_R      := cp -r
-RUN_CMD   := ./$(TARGET)$(EXE_EXT)
+EXE_EXT := .exe
+CXX := C:/msys64/mingw64/bin/g++.exe
+LDLIBS  := -lglew32 -lfreeglut -lopengl32 -lglu32 -lopenal
+SRCS    := $(shell powershell -NoProfile -Command "Get-ChildItem -Path $(SRC_DIR) -Recurse -Filter *.cpp | % { $_.FullName.Replace('\\','/') }")
+MKDIR_P := powershell -NoProfile -Command "New-Item -ItemType Directory -Force -Path \"$(1)\" | Out-Null"
+RM_RF   := powershell -NoProfile -Command "if (Test-Path \"$(1)\") { Remove-Item -Recurse -Force \"$(1)\" }"
+CP_R    := powershell -NoProfile -Command "Copy-Item -Recurse -Force \"$(1)\" \"$(2)\""
+CP_F    := powershell -NoProfile -Command "if (Test-Path \"$(1)\") { Copy-Item -Force \"$(1)\" \"$(2)\" }"
+RUN_CMD := .\\$(TARGET)$(EXE_EXT)
 else
-EXE_EXT   :=
-LDLIBS    := -lGLEW -lGL -lGLU -lglut -lopenal
-RM_RF     := rm -rf
-CP_R      := cp -r
-RUN_CMD   := ./$(TARGET)$(EXE_EXT)
+EXE_EXT :=
+LDLIBS  := -lGLEW -lGL -lGLU -lglut -lopenal
+SRCS    := $(shell find $(SRC_DIR) -name '*.cpp' | sort)
+MKDIR_P := mkdir -p $(1)
+RM_RF   := rm -rf $(1)
+CP_R    := cp -r $(1) $(2)
+CP_F    := cp -f $(1) $(2)
+RUN_CMD := ./$(TARGET)$(EXE_EXT)
 endif
 
-BUILD_DIR := build
-
-SRC_DIR   := src
-MAIN      := main.cpp
-
-# Encontra todos os .cpp dentro de src (recursivo)
-SRCS      := $(shell find $(SRC_DIR) -name '*.cpp' | sort)
-SRCS      += $(MAIN)
-
-# Converte paths em nomes de objetos dentro de build/
-OBJS      := $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(SRCS))
+SRCS += $(MAIN)
+OBJS := $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(SRCS))
 
 .PHONY: all clean run dirs stage
 
-# Build padrao ja gera build pronta para rodar/entregar
 all: $(BUILD_DIR)/$(TARGET)$(EXE_EXT) stage
 
 $(BUILD_DIR)/$(TARGET)$(EXE_EXT): dirs $(OBJS)
 	$(CXX) $(LDFLAGS) $(OBJS) -o $@ $(LDLIBS)
 
-# Regra generica: compila qualquer .cpp para build/.../.o
 $(BUILD_DIR)/%.o: %.cpp
-	@mkdir -p $(dir $@)
+	$(call MKDIR_P,$(dir $@))
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 dirs:
-	@mkdir -p $(BUILD_DIR)
+	$(call MKDIR_P,$(BUILD_DIR))
 
-# Copia recursos para dentro de build/ (self-contained)
 stage: dirs
-	@$(RM_RF) $(BUILD_DIR)/assets $(BUILD_DIR)/maps $(BUILD_DIR)/shaders
-	@$(CP_R) assets  $(BUILD_DIR)/
-	@$(CP_R) maps    $(BUILD_DIR)/
-	@$(CP_R) shaders $(BUILD_DIR)/
+	$(call RM_RF,$(BUILD_DIR)/assets)
+	$(call RM_RF,$(BUILD_DIR)/maps)
+	$(call RM_RF,$(BUILD_DIR)/shaders)
+	$(call CP_R,assets,$(BUILD_DIR)/)
+	$(call CP_R,maps,$(BUILD_DIR)/)
+	$(call CP_R,shaders,$(BUILD_DIR)/)
+ifeq ($(OS),Windows_NT)
+	$(call CP_F,C:/msys64/mingw64/bin/libopenal-1.dll,$(BUILD_DIR)/)
+	$(call CP_F,C:/msys64/mingw64/bin/OpenAL32.dll,$(BUILD_DIR)/)
+	$(call CP_F,C:/msys64/mingw64/bin/libstdc++-6.dll,$(BUILD_DIR)/)
+	$(call CP_F,C:/msys64/mingw64/bin/libgcc_s_seh-1.dll,$(BUILD_DIR)/)
+	$(call CP_F,C:/msys64/mingw64/bin/libwinpthread-1.dll,$(BUILD_DIR)/)
+endif
 
-# Roda SEM depender do cwd externo
 run: all
 	cd $(BUILD_DIR) && $(RUN_CMD)
 
 clean:
-	$(RM_RF) $(BUILD_DIR)
+	$(call RM_RF,$(BUILD_DIR))
 
