@@ -18,8 +18,7 @@ struct GameAssets
     GLuint texLava = 0;
     GLuint texChaoInterno = 0;
     GLuint texParedeInterna = 0;
-    GLuint texTeto2 = 0;
-    GLuint texTeto3 = 0;
+    GLuint texTeto = 0;
     GLuint texEnemy = 0;
     GLuint texEnemyRage = 0;    // Viu o player
     GLuint texEnemyDamage = 0;  // Leva dano
@@ -46,6 +45,8 @@ struct GameAssets
     GLuint progExit = 0;
 
     GLuint texSkydome = 0;
+    GLuint texSkydome2 = 0;
+    GLuint texSkydome3 = 0;
 };
 
 bool loadAssets(GameAssets &a);

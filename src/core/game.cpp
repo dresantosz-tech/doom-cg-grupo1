@@ -74,6 +74,13 @@ static bool loadCurrentMapAndSpawn()
         return false;
 
     g.r.mapTheme = gCurrentMapIndex + 1;
+    if (gCurrentMapIndex == 0)
+        g.r.texSkydome = gAssets.texSkydome;
+    else if (gCurrentMapIndex == 1)
+        g.r.texSkydome = (gAssets.texSkydome2 != 0) ? gAssets.texSkydome2 : gAssets.texSkydome;
+    else if (gCurrentMapIndex == 2)
+        g.r.texSkydome = (gAssets.texSkydome3 != 0) ? gAssets.texSkydome3 : gAssets.texSkydome;
+
     applySpawn(gLevel, camX, camZ);
     camY = GameConfig::PLAYER_EYE_Y;
     return true;
@@ -126,14 +133,17 @@ bool gameInit(const char *mapPath)
     g.r.texLava = gAssets.texLava;
     g.r.texChaoInterno = gAssets.texChaoInterno;
     g.r.texParedeInterna = gAssets.texParedeInterna;
-    g.r.texTeto2 = gAssets.texTeto2;
-    g.r.texTeto3 = gAssets.texTeto3;
+    g.r.texTeto = gAssets.texTeto;
 
     g.r.texSkydome = gAssets.texSkydome;
+    g.r.texSkydome2 = gAssets.texSkydome2;
+    g.r.texSkydome3 = gAssets.texSkydome3;
     g.r.texMenuBG = gAssets.texMenuBG;
     g.r.texEndBG = gAssets.texEndBG;
 
     gHudTex.texHudFundo = gAssets.texHudFundo;
+    gHudTex.texHealthHudIcon = gAssets.texHudFundo;
+    gHudTex.texStaminaHudIcon = gAssets.texStaminaHUD;
     gHudTex.texKeyIcon = gAssets.texKey;
     gHudTex.texGunHUD = gAssets.texGunHUD;
 

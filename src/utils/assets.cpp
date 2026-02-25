@@ -20,8 +20,7 @@ bool loadAssets(GameAssets &a)
     // a.texChaoInterno = carregaTextura("assets/secondMapGround.png");
     // a.texParedeInterna = carregaTextura("assets/firstMapGround.png");
     //a.texTeto1 = carregaTextura("assets/lastMapGround.png");
-    a.texTeto2 = carregaTextura("assets/teto.png");
-    a.texTeto3 = carregaTextura("assets/teto2.png");
+    a.texTeto = carregaTextura("assets/teto.png");
 
     a.progSangue = criaShader("shaders/blood.vert", "shaders/blood.frag");
     a.progLava = criaShader("shaders/lava.vert", "shaders/lava.frag");
@@ -63,6 +62,8 @@ bool loadAssets(GameAssets &a)
     a.texKey = carregaTextura("assets/key.png");
 
     a.texSkydome = carregaTextura("assets/Va4wUMQ.png");
+    a.texSkydome2 = carregaTextura("assets/secondMap_bg.png");
+    a.texSkydome3 = carregaTextura("assets/lastMap_bg.png");
 
     a.texGunHUD = a.texGunDefault;
     a.texHudFundo = carregaTextura("assets/hp-HUD.png");
@@ -71,7 +72,7 @@ bool loadAssets(GameAssets &a)
     if (!a.texChao1 || !a.texChao2 || !a.texChao3 || !a.texChao4 || !a.texParede1 || 
         !a.texParede2 || !a.texParede3 || !a.texSangue || !a.texLava || !a.progSangue ||
         !a.progLava || !a.texHealth || !a.texGunDefault || !a.texGunFire1 ||
-        !a.texGunFire2 || !a.texSkydome || !a.texGunReload1 || !a.texGunReload2 ||
+        !a.texGunFire2 || !a.texSkydome || !a.texSkydome2 || !a.texSkydome3 || !a.texGunReload1 || !a.texGunReload2 ||
         !a.texDamage || !a.texKey || !a.texHealthOverlay || !a.texEnemies[0] ||
         !a.texEnemiesRage[0] || !a.texEnemiesDamage[0] || !a.texEnemies[1] ||
         !a.texEnemiesRage[1] || !a.texEnemiesDamage[1] || !a.texEnemies[2] ||

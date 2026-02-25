@@ -408,17 +408,11 @@ void drawLevel(const MapLoader &map, float px, float pz, float dx, float dz, con
     GLuint wallTex = r.texParede1;
     GLuint floorTex = r.texChao1;
     GLuint ceilTex = 0;
-    if (r.mapTheme == 2)
-    {
-        wallTex = r.texParede2;
-        floorTex = r.texChao2;
-        ceilTex = r.texTeto2;
-    }
-    else if (r.mapTheme == 3)
+    if (r.mapTheme == 3)
     {
         wallTex = r.texParede3;
         floorTex = r.texChao3;
-        ceilTex = r.texTeto3;
+        ceilTex = r.texTeto;
     }
 
     float fwdx, fwdz;

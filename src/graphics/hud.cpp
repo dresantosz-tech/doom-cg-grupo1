@@ -111,6 +111,41 @@ static void drawHealthOverlay(int w, int h, GLuint texHealth, float alpha)
     end2D();
 }
 
+static void drawKeyIndicatorTopRight(int w, int h, GLuint texKey, bool hasKey)
+{
+    if (!hasKey || texKey == 0)
+        return;
+
+    begin2D(w, h);
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glBindTexture(GL_TEXTURE_2D, texKey);
+    glColor4f(1, 1, 1, 1);
+
+    float iconH = h * 0.085f;
+    float iconW = iconH;
+    float margin = h * 0.025f;
+    float x = w - iconW - margin;
+    float y = h - iconH - margin;
+
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 1); glVertex2f(x, y);
+    glTexCoord2f(1, 1); glVertex2f(x + iconW, y);
+    glTexCoord2f(1, 0); glVertex2f(x + iconW, y + iconH);
+    glTexCoord2f(0, 0); glVertex2f(x, y + iconH);
+    glEnd();
+
+    glDisable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
+
+    end2D();
+}
+
 static float computeBobbingOffsetY(const HudState& s);
 
 static void drawWeaponHUD(int w, int h, const HudTextures& tex, const HudState& s)
@@ -238,6 +273,30 @@ static void drawDoomBar(int w, int h, const HudTextures& tex, const HudState& s)
     float barX = xTextHealth + (w * 0.08f);
     float barMaxW = (w * 0.45f) - barX;
 
+    if (tex.texHealthHudIcon != 0)
+    {
+        glEnable(GL_TEXTURE_2D);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glColor3f(1, 1, 1);
+
+        float iconH = barH;
+        float iconW = iconH;
+        float iconX = barX - iconW - 8.0f;
+        float iconY = barY;
+
+        glBindTexture(GL_TEXTURE_2D, tex.texHealthHudIcon);
+        glBegin(GL_QUADS);
+        glTexCoord2f(0, 1); glVertex2f(iconX, iconY);
+        glTexCoord2f(1, 1); glVertex2f(iconX + iconW, iconY);
+        glTexCoord2f(1, 0); glVertex2f(iconX + iconW, iconY + iconH);
+        glTexCoord2f(0, 0); glVertex2f(iconX, iconY + iconH);
+        glEnd();
+
+        glDisable(GL_BLEND);
+        glDisable(GL_TEXTURE_2D);
+    }
+
     glColor4f(0, 0, 0, 1);
     glBegin(GL_QUADS);
     glVertex2f(barX, barY); glVertex2f(barX + barMaxW, barY);
@@ -269,6 +328,30 @@ static void drawDoomBar(int w, int h, const HudTextures& tex, const HudState& s)
     float stBarX = xTextStamina + (w * 0.10f);
     float stBarMaxW = (w * 0.95f) - stBarX;
 
+    if (tex.texStaminaHudIcon != 0)
+    {
+        glEnable(GL_TEXTURE_2D);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glColor3f(1, 1, 1);
+
+        float iconH = barH;
+        float iconW = iconH;
+        float iconX = stBarX - iconW - 8.0f;
+        float iconY = barY;
+
+        glBindTexture(GL_TEXTURE_2D, tex.texStaminaHudIcon);
+        glBegin(GL_QUADS);
+        glTexCoord2f(0, 1); glVertex2f(iconX, iconY);
+        glTexCoord2f(1, 1); glVertex2f(iconX + iconW, iconY);
+        glTexCoord2f(1, 0); glVertex2f(iconX + iconW, iconY + iconH);
+        glTexCoord2f(0, 0); glVertex2f(iconX, iconY + iconH);
+        glEnd();
+
+        glDisable(GL_BLEND);
+        glDisable(GL_TEXTURE_2D);
+    }
+
     glColor4f(0, 0, 0, 1);
     glBegin(GL_QUADS);
     glVertex2f(stBarX, barY); glVertex2f(stBarX + stBarMaxW, barY);
@@ -290,29 +373,6 @@ static void drawDoomBar(int w, int h, const HudTextures& tex, const HudState& s)
     glVertex2f(stBarX, barY + barH);
     glEnd();
 
-    if (s.hasKey && tex.texKeyIcon != 0)
-    {
-        glEnable(GL_TEXTURE_2D);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glColor3f(1, 1, 1);
-
-        float iconH = hBar * 0.70f;
-        float iconW = iconH;
-        float iconX = w - iconW - (w * 0.02f);
-        float iconY = (hBar - iconH) * 0.5f;
-
-        glBindTexture(GL_TEXTURE_2D, tex.texKeyIcon);
-        glBegin(GL_QUADS);
-        glTexCoord2f(0, 1); glVertex2f(iconX, iconY);
-        glTexCoord2f(1, 1); glVertex2f(iconX + iconW, iconY);
-        glTexCoord2f(1, 0); glVertex2f(iconX + iconW, iconY + iconH);
-        glTexCoord2f(0, 0); glVertex2f(iconX, iconY + iconH);
-        glEnd();
-
-        glDisable(GL_BLEND);
-        glDisable(GL_TEXTURE_2D);
-    }
     // arma ícone
     // if (tex.texGunHUD != 0)
     // {
@@ -376,6 +436,7 @@ void hudRenderAll(
     // Ordem: arma -> barra -> mira -> overlays
     if (showWeapon)  drawWeaponHUD(screenW, screenH, tex, state);
     if (showDoomBar) drawDoomBar(screenW, screenH, tex, state);
+    drawKeyIndicatorTopRight(screenW, screenH, tex.texKeyIcon, state.hasKey);
 
     (void)showCrosshair;
 
