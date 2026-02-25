@@ -3,8 +3,8 @@
     "tasks": [
         {
             "label": "Build DoomLike (g++ MSYS2)",
-            "type": "shell",
-            "command": "powershell",
+            "type": "process",
+            "command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
             "args": [
                 "-NoProfile",
                 "-ExecutionPolicy",
@@ -20,7 +20,7 @@
             ],
             "group": {
                 "kind": "build",
-                "isDefault": false
+                "isDefault": true
             }
         },
         {
@@ -50,10 +50,14 @@
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-lGLEW",
-                "-lGL",
-                "-lGLU",
+                // "-lGL",
+                // "-lGLU",
                 "-lopenal",
-                "-lglut"
+                //"-lglut",
+                "-lglew32",
+                "-lfreeglut",
+                "-lopengl32",
+                "-lglu32"
             ],
             "options": {
                 "cwd": "${fileDirname}"

@@ -35,6 +35,12 @@
 
 static HudTextures gHudTex;
 static GameContext g;
+static constexpr int kTotalMaps = 3;
+static const char *kMapSequence[kTotalMaps] = {
+    "maps/map1.txt",
+    "maps/map2.txt",
+    "maps/map3.txt"};
+static int gCurrentMapIndex = 0;
 
 // --- Assets / Level ---
 static GameAssets gAssets;
@@ -57,6 +63,40 @@ void gameTogglePause()
         g.state = GameState::PAUSADO;
     else if (g.state == GameState::PAUSADO)
         g.state = GameState::JOGANDO;
+}
+
+static bool loadCurrentMapAndSpawn()
+{
+    if (gCurrentMapIndex < 0 || gCurrentMapIndex >= kTotalMaps)
+        return false;
+
+    if (!loadLevel(gLevel, kMapSequence[gCurrentMapIndex], GameConfig::TILE_SIZE))
+        return false;
+
+    applySpawn(gLevel, camX, camZ);
+    camY = GameConfig::PLAYER_EYE_Y;
+    return true;
+}
+
+static bool playerOnMapTile(char tileId)
+{
+    const auto &data = gLevel.map.data();
+    if (data.empty())
+        return false;
+
+    const float tile = gLevel.metrics.tile;
+    const float localX = camX - gLevel.metrics.offsetX;
+    const float localZ = camZ - gLevel.metrics.offsetZ;
+
+    int tx = (int)std::floor(localX / tile);
+    int tz = (int)std::floor(localZ / tile);
+
+    if (tz < 0 || tz >= (int)data.size())
+        return false;
+    if (tx < 0 || tx >= (int)data[tz].size())
+        return false;
+
+    return data[tz][tx] == tileId;
 }
 
 // --- INIT ---
@@ -112,11 +152,10 @@ bool gameInit(const char *mapPath)
     g.r.progSangue = gAssets.progSangue;
     g.r.progLava = gAssets.progLava;
 
-    if (!loadLevel(gLevel, mapPath, GameConfig::TILE_SIZE))
+    (void)mapPath;
+    gCurrentMapIndex = 0;
+    if (!loadCurrentMapAndSpawn())
         return false;
-
-    applySpawn(gLevel, camX, camZ);
-    camY = GameConfig::PLAYER_EYE_Y;
 
     glutKeyboardFunc(keyboard);
     glutKeyboardUpFunc(keyboardUp);
@@ -138,14 +177,18 @@ bool gameInit(const char *mapPath)
 // Reinicia o jogo
 void gameReset()
 {
+    gCurrentMapIndex = 0;
+    loadCurrentMapAndSpawn();
+
     g.player.health = 100;
     g.player.stamina = 100.0f;
 
     g.player.damageAlpha = 0.0f;
     g.player.healthAlpha = 0.0f;
 
-    // Respawna o jogador
-    applySpawn(gLevel, camX, camZ);
+    // limpa input residual ao reset
+    keyW = keyA = keyS = keyD = false;
+    keyShift = false;
 }
 
 void gameUpdate(float dt)
@@ -187,6 +230,26 @@ void gameUpdate(float dt)
     }
 
     updateEntities(dt);
+
+    // Progresso de mapa via tile 'S'
+    if (playerOnMapTile('S'))
+    {
+        if (gCurrentMapIndex + 1 < kTotalMaps)
+        {
+            gCurrentMapIndex++;
+            if (!loadCurrentMapAndSpawn())
+            {
+                g.state = GameState::GAME_OVER;
+                g.player.damageAlpha = 1.0f;
+                return;
+            }
+        }
+        else
+        {
+            g.state = GameState::VITORIA;
+            return;
+        }
+    }
 
     // 3. CHECAGEM DE GAME OVER
     if (g.player.health <= 0)
@@ -254,6 +317,12 @@ void gameRender()
 
         // Tela do game over por cima (com fogo)
         menuRender(janelaW, janelaH, g.time, "GAME OVER", "Pressione ENTER para Reiniciar", g.r);
+    }
+    // --- ESTADO: VITORIA ---
+    else if (g.state == GameState::VITORIA)
+    {
+        drawWorld3D();
+        menuRender(janelaW, janelaH, g.time, "VITORIA", "Pressione ENTER para Reiniciar", g.r);
     }
     // --- ESTADO: PAUSADO ---
     else if (g.state == GameState::PAUSADO)

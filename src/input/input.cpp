@@ -32,6 +32,16 @@ void keyboard(unsigned char key, int, int)
         return;
     }
 
+    if (state == GameState::VITORIA)
+    {
+        if (key == 13)
+        {
+            gameReset();
+            gameSetState(GameState::JOGANDO);
+        }
+        return;
+    }
+
     if (state == GameState::PAUSADO)
     {
         if (key == 'p' || key == 'P')

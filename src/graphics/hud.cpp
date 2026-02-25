@@ -345,7 +345,7 @@ void hudRenderAll(
     int screenH,
     const HudTextures& tex,
     const HudState& state,
-    //bool showCrosshair,
+    bool showCrosshair,
     bool showWeapon,
     bool showDoomBar)
 {
@@ -353,7 +353,7 @@ void hudRenderAll(
     if (showWeapon)  drawWeaponHUD(screenW, screenH, tex, state);
     if (showDoomBar) drawDoomBar(screenW, screenH, tex, state);
 
-    //if (showCrosshair) drawCrosshair(screenW, screenH);
+    (void)showCrosshair;
 
     drawDamageOverlay(screenW, screenH, tex.texDamage, state.damageAlpha);
     drawHealthOverlay(screenW, screenH, tex.texHealthOverlay, state.healthAlpha);
