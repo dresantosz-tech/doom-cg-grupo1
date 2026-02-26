@@ -10,6 +10,7 @@ struct HudTextures
     GLuint texHealthHudIcon = 0;
     GLuint texStaminaHudIcon = 0;
     GLuint texKeyIcon = 0;
+    GLuint texNoKeyIcon = 0;
     GLuint texGunHUD = 0;
 
     GLuint texGunDefault = 0;

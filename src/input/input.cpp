@@ -52,6 +52,10 @@ void keyboard(unsigned char key, int, int)
 
     if (state == GameState::JOGANDO)
     {
+        // Fallback: captura SHIFT em combinacoes do callback de teclado.
+        if (glutGetModifiers() & GLUT_ACTIVE_SHIFT)
+            keyShift = true;
+
         if (key == 'p' || key == 'P')
         {
             gameSetState(GameState::PAUSADO);
@@ -107,6 +111,9 @@ void keyboardUp(unsigned char key, int, int)
         keyD = false;
         break;
     }
+
+    // Fallback: atualiza estado do SHIFT quando teclas comuns sao liberadas.
+    keyShift = (glutGetModifiers() & GLUT_ACTIVE_SHIFT) != 0;
 
     if ((key == 13 || key == '\r') && (glutGetModifiers() & GLUT_ACTIVE_ALT))
         altFullScreen();

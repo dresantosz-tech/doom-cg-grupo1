@@ -35,6 +35,7 @@ struct GameAssets
     GLuint texHudFundo = 0;
     GLuint texHpHUD = 0;
     GLuint texStaminaHUD = 0;
+    GLuint texHandHUD = 0;
 
     GLuint texEnemies[5]       = {0, 0, 0, 0, 0};
     GLuint texEnemiesRage[5]   = {0, 0, 0, 0, 0};

@@ -89,9 +89,16 @@ void atualizaMovimento(float dt)
     auto &g = gameContext();
 
     const bool movingInput = keyW || keyA || keyS || keyD;
-    bool sprinting = movingInput && keyShift && g.player.stamina > STAMINA_MIN;
+    const bool shiftHeld = keyShift;
+    bool sprinting = movingInput &&
+                     shiftHeld &&
+                     g.player.stamina > STAMINA_MIN &&
+                     g.player.stamina < STAMINA_MAX;
 
-    if (sprinting)
+    // Regra de stamina:
+    // - Segurando SHIFT: drena continuamente.
+    // - Soltando SHIFT: recupera lentamente.
+    if (shiftHeld)
     {
         g.player.stamina -= STAMINA_CONSUMPTION_PER_SEC * dt;
         if (g.player.stamina <= STAMINA_MIN)

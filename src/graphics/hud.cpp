@@ -111,9 +111,10 @@ static void drawHealthOverlay(int w, int h, GLuint texHealth, float alpha)
     end2D();
 }
 
-static void drawKeyIndicatorTopRight(int w, int h, GLuint texKey, bool hasKey)
+static void drawKeyIndicatorTopRight(int w, int h, GLuint texKey, GLuint texNoKey, bool hasKey)
 {
-    if (!hasKey || texKey == 0)
+    GLuint tex = hasKey ? texKey : texNoKey;
+    if (tex == 0)
         return;
 
     begin2D(w, h);
@@ -124,7 +125,7 @@ static void drawKeyIndicatorTopRight(int w, int h, GLuint texKey, bool hasKey)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glBindTexture(GL_TEXTURE_2D, texKey);
+    glBindTexture(GL_TEXTURE_2D, tex);
     glColor4f(1, 1, 1, 1);
 
     float iconH = h * 0.085f;
@@ -230,6 +231,11 @@ static void drawDoorPrompt(int w, int h, bool showPrompt, bool canUnlock)
 }
 
 static float computeBobbingOffsetY(const HudState& s);
+
+static float lerpFloat(float a, float b, float t)
+{
+    return a + (b - a) * t;
+}
 
 static void drawWeaponHUD(int w, int h, const HudTextures& tex, const HudState& s)
 {
@@ -441,13 +447,42 @@ static void drawDoomBar(int w, int h, const HudTextures& tex, const HudState& s)
     glVertex2f(stBarX + stBarMaxW, barY + barH); glVertex2f(stBarX, barY + barH);
     glEnd();
 
-    float staminaPct = (float)s.playerStamina / 100.0f;
-    if (staminaPct < 0) staminaPct = 0;
-    if (staminaPct > 1) staminaPct = 1;
+    float staminaTarget = (float)s.playerStamina / 100.0f;
+    if (staminaTarget < 0) staminaTarget = 0;
+    if (staminaTarget > 1) staminaTarget = 1;
 
-    if (staminaPct > 0.6f) glColor3f(0.0f, 0.7f, 1.0f);
-    else if (staminaPct > 0.3f) glColor3f(1.0f, 0.8f, 0.0f);
-    else glColor3f(0.9f, 0.2f, 0.1f);
+    // Suaviza visualmente a barra para evitar "saltos" quando o valor inteiro muda.
+    static float staminaSmooth = 1.0f;
+    staminaSmooth = lerpFloat(staminaSmooth, staminaTarget, 0.22f);
+    float staminaPct = staminaSmooth;
+
+    // Cor dinamica: vermelho (0%) -> amarelo (50%) -> azul/ciano (100%).
+    float rCol, gCol, bCol;
+    if (staminaPct < 0.5f)
+    {
+        float t = staminaPct / 0.5f;
+        rCol = lerpFloat(0.90f, 1.00f, t);
+        gCol = lerpFloat(0.20f, 0.80f, t);
+        bCol = lerpFloat(0.10f, 0.00f, t);
+    }
+    else
+    {
+        float t = (staminaPct - 0.5f) / 0.5f;
+        rCol = lerpFloat(1.00f, 0.00f, t);
+        gCol = lerpFloat(0.80f, 0.70f, t);
+        bCol = lerpFloat(0.00f, 1.00f, t);
+    }
+
+    // Pulso quando stamina baixa.
+    if (staminaPct <= 0.30f)
+    {
+        float pulse = 0.75f + 0.25f * (0.5f + 0.5f * std::sin(s.gameTime * 9.0f));
+        rCol *= pulse;
+        gCol *= pulse;
+        bCol *= pulse;
+    }
+
+    glColor3f(rCol, gCol, bCol);
 
     glBegin(GL_QUADS);
     glVertex2f(stBarX, barY);
@@ -519,7 +554,7 @@ void hudRenderAll(
     // Ordem: arma -> barra -> mira -> overlays
     if (showWeapon)  drawWeaponHUD(screenW, screenH, tex, state);
     if (showDoomBar) drawDoomBar(screenW, screenH, tex, state);
-    drawKeyIndicatorTopRight(screenW, screenH, tex.texKeyIcon, state.hasKey);
+    drawKeyIndicatorTopRight(screenW, screenH, tex.texKeyIcon, tex.texNoKeyIcon, state.hasKey);
     drawKeyPickupPrompt(screenW, screenH, state.showKeyPickupPrompt);
     drawDoorPrompt(screenW, screenH, state.showDoorPrompt, state.canUnlockDoor);
 

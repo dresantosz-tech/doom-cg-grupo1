@@ -35,9 +35,9 @@
 
 static HudTextures gHudTex;
 static GameContext g;
-static constexpr int kTotalMaps = 4;
+static constexpr int kTotalMaps = 3;
 static const char *kMapSequence[kTotalMaps] = {
-    "maps/mapTestes.txt",
+    //"maps/mapTestes.txt",
     "maps/map1.txt",
     "maps/map2.txt",
     "maps/map3.txt"};
@@ -209,6 +209,7 @@ bool gameInit(const char *mapPath)
     gHudTex.texHealthHudIcon = gAssets.texHpHUD;
     gHudTex.texStaminaHudIcon = gAssets.texStaminaHUD;
     gHudTex.texKeyIcon = gAssets.texKey;
+    gHudTex.texNoKeyIcon = gAssets.texHandHUD;
     gHudTex.texGunHUD = gAssets.texGunHUD;
 
     gHudTex.texGunDefault = gAssets.texGunDefault;
