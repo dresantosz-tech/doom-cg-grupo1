@@ -4,6 +4,22 @@
 #include "audio/audio_system.h"
 #include <cmath>
 
+static bool nearTileBounds(float px, float pz, float txCenterX, float tzCenterZ, float tileSize, float maxDist)
+{
+    float half = tileSize * 0.5f;
+    float minX = txCenterX - half;
+    float maxX = txCenterX + half;
+    float minZ = tzCenterZ - half;
+    float maxZ = tzCenterZ + half;
+
+    float cx = std::fmax(minX, std::fmin(px, maxX));
+    float cz = std::fmax(minZ, std::fmin(pz, maxZ));
+
+    float dx = px - cx;
+    float dz = pz - cz;
+    return (dx * dx + dz * dz) <= (maxDist * maxDist);
+}
+
 bool isWalkable(float x, float z)
 {
     auto& lvl = gameLevel();
@@ -63,7 +79,7 @@ void updateEntities(float dt)
             if (dist < ENEMY_ATTACK_DIST)
             {
                 en.state = STATE_ATTACK;
-                en.attackCooldown = 0.5f;
+                en.attackCooldown = .25f;
             }
             else if (dist > ENEMY_VIEW_DIST * 1.5f)
             {
@@ -161,5 +177,41 @@ void playerTryInteract()
         item.respawnTimer = 999999.0f;
         g.player.hasKey = true;
         break;
+    }
+
+    // Interacao com porta: se tiver chave e estiver perto de um tile 'D',
+    // destranca convertendo para ',' (chao + teto).
+    const float tile = lvl.metrics.tile;
+    const float offX = lvl.metrics.offsetX;
+    const float offZ = lvl.metrics.offsetZ;
+    const int tx0 = (int)((camX - offX) / tile);
+    const int tz0 = (int)((camZ - offZ) / tile);
+
+    for (int dz = -1; dz <= 1; ++dz)
+    {
+        for (int dx = -1; dx <= 1; ++dx)
+        {
+            const int tx = tx0 + dx;
+            const int tz = tz0 + dz;
+
+            const auto &data = lvl.map.data();
+            if (tz < 0 || tz >= (int)data.size())
+                continue;
+            if (tx < 0 || tx >= (int)data[tz].size())
+                continue;
+            if (data[tz][tx] != 'D')
+                continue;
+
+            float wx, wz;
+            lvl.metrics.tileCenter(tx, tz, wx, wz);
+            if (!nearTileBounds(camX, camZ, wx, wz, tile, 1.8f))
+                continue;
+
+            if (g.player.hasKey)
+            {
+                lvl.map.setTile(tx, tz, ',');
+            }
+            return;
+        }
     }
 }

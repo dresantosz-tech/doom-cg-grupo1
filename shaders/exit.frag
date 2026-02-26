@@ -13,18 +13,15 @@ void main()
 {
     vec4 baseColor = texture2D(uTexture, vTexCoord);
 
-    // Converte os controles do shader original para uma faixa util em UV.
-    float t0 = clamp((threshold + 1.0) * 0.5, 0.0, 1.0);
-    float t1 = clamp(max(t0 + 0.05, error_correction), 0.0, 1.0);
+    // Efeito preenchendo todo o QUADRADO do tile (sem mascara circular/eliptica).
+    float stripes = 0.88 + 0.12 * sin(vTexCoord.y * 420.0 + uTime * 2.7);
+    float waveX = 0.90 + 0.10 * sin(vTexCoord.x * 38.0 - uTime * 1.8);
+    float grain = 0.96 + 0.04 * sin((vVertex.x + vVertex.z) * 55.0 + uTime * 8.0);
+    float pulse = 0.92 + 0.08 * sin(uTime * 3.2);
 
-    float band = step(t0, vTexCoord.y) * step(vTexCoord.y, t1);
-    float pulse = 0.55 + 0.45 * sin(uTime * 5.0);
+    float intensity = stripes * waveX * grain * pulse;
+    vec3 tinted = mix(baseColor.rgb, color.rgb, 0.78);
+    vec3 finalColor = tinted * (1.02 * intensity);
 
-    vec3 tinted = mix(baseColor.rgb, color.rgb, 0.70);
-    vec3 finalColor = mix(baseColor.rgb, tinted * (0.8 + 0.2 * pulse), band);
-
-    float alphaBand = clamp((1.0 - vTexCoord.y) * color.a, 0.0, 1.0);
-    float alpha = mix(baseColor.a, max(baseColor.a, alphaBand), band);
-
-    gl_FragColor = vec4(finalColor, alpha);
+    gl_FragColor = vec4(finalColor, 1.0);
 }

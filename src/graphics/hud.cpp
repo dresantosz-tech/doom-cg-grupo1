@@ -146,6 +146,89 @@ static void drawKeyIndicatorTopRight(int w, int h, GLuint texKey, bool hasKey)
     end2D();
 }
 
+static void drawKeyPickupPrompt(int w, int h, bool showPrompt)
+{
+    if (!showPrompt)
+        return;
+
+    const char *msg = "Pressione E para pegar a chave";
+    const float textScale = 0.22f;
+    const float textW = uiStrokeTextWidthScaled(msg, textScale);
+    const float panelPadX = 20.0f;
+    const float panelPadY = 12.0f;
+    const float panelH = 46.0f;
+    const float panelW = textW + panelPadX * 2.0f;
+    const float panelX = (w - panelW) * 0.5f;
+    const float panelY = h * 0.16f;
+
+    begin2D(w, h);
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glColor4f(0.0f, 0.0f, 0.0f, 0.60f);
+    glBegin(GL_QUADS);
+    glVertex2f(panelX, panelY);
+    glVertex2f(panelX + panelW, panelY);
+    glVertex2f(panelX + panelW, panelY + panelH);
+    glVertex2f(panelX, panelY + panelH);
+    glEnd();
+
+    glColor3f(1.0f, 0.95f, 0.35f);
+    uiDrawStrokeText(panelX + panelPadX, panelY + panelPadY, msg, textScale);
+
+    glDisable(GL_BLEND);
+
+    end2D();
+}
+
+static void drawDoorPrompt(int w, int h, bool showPrompt, bool canUnlock)
+{
+    if (!showPrompt)
+        return;
+
+    const char *msg = canUnlock
+        ? "Pressione E para abrir a porta"
+        : "Trancado. Use uma chave para destrancar.";
+
+    const float textScale = 0.20f;
+    const float textW = uiStrokeTextWidthScaled(msg, textScale);
+    const float panelPadX = 20.0f;
+    const float panelPadY = 12.0f;
+    const float panelH = 46.0f;
+    const float panelW = textW + panelPadX * 2.0f;
+    const float panelX = (w - panelW) * 0.5f;
+    const float panelY = h * 0.22f;
+
+    begin2D(w, h);
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glColor4f(0.0f, 0.0f, 0.0f, 0.62f);
+    glBegin(GL_QUADS);
+    glVertex2f(panelX, panelY);
+    glVertex2f(panelX + panelW, panelY);
+    glVertex2f(panelX + panelW, panelY + panelH);
+    glVertex2f(panelX, panelY + panelH);
+    glEnd();
+
+    if (canUnlock)
+        glColor3f(0.4f, 1.0f, 0.4f);
+    else
+        glColor3f(1.0f, 0.72f, 0.30f);
+    uiDrawStrokeText(panelX + panelPadX, panelY + panelPadY, msg, textScale);
+
+    glDisable(GL_BLEND);
+    end2D();
+}
+
 static float computeBobbingOffsetY(const HudState& s);
 
 static void drawWeaponHUD(int w, int h, const HudTextures& tex, const HudState& s)
@@ -258,7 +341,7 @@ static void drawDoomBar(int w, int h, const HudTextures& tex, const HudState& s)
     float scaleLbl = 0.0018f * hBar;
     //float scaleNum = 0.0035f * hBar;
 
-    float colLbl[3] = {1.0f, 0.8f, 0.5f};
+    float colLbl[3] = {0.3f, 0.2f, 0.8f};
     //float colNum[3] = {0.8f, 0.0f, 0.0f};
 
     // HEALTH label
@@ -437,6 +520,8 @@ void hudRenderAll(
     if (showWeapon)  drawWeaponHUD(screenW, screenH, tex, state);
     if (showDoomBar) drawDoomBar(screenW, screenH, tex, state);
     drawKeyIndicatorTopRight(screenW, screenH, tex.texKeyIcon, state.hasKey);
+    drawKeyPickupPrompt(screenW, screenH, state.showKeyPickupPrompt);
+    drawDoorPrompt(screenW, screenH, state.showDoorPrompt, state.canUnlockDoor);
 
     (void)showCrosshair;
 

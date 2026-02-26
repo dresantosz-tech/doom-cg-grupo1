@@ -27,6 +27,9 @@ struct HudState
     int playerHealth = 100;
     int playerStamina = 100;
     bool hasKey = false;
+    bool showKeyPickupPrompt = false;
+    bool showDoorPrompt = false;
+    bool canUnlockDoor = false;
     bool isMoving = false;
     bool isSprinting = false;
     float gameTime = 0.0f;

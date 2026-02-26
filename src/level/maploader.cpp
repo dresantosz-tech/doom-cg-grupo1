@@ -42,3 +42,14 @@ bool MapLoader::load(const char* filename) {
     file.close();
     return (height > 0 && width > 0);
 }
+
+bool MapLoader::setTile(int x, int z, char c)
+{
+    if (z < 0 || z >= (int)mapData.size())
+        return false;
+    if (x < 0 || x >= (int)mapData[z].size())
+        return false;
+
+    mapData[z][x] = c;
+    return true;
+}

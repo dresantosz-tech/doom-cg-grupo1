@@ -355,7 +355,7 @@ static void desenhaTileSaida(float x, float z, GLuint texBase, const RenderAsset
     glUniform1f(locTime, time);
     glUniform1f(locThreshold, -0.6f);
     glUniform1f(locError, 0.9f);
-    glUniform4f(locColor, 0.1f, 0.95f, 0.2f, 1.0f);
+    glUniform4f(locColor, 0.10f, 0.95f, 0.20f, 1.0f);
 
     desenhaQuadChao(x, z, TILE, 2.0f);
 

@@ -35,8 +35,9 @@
 
 static HudTextures gHudTex;
 static GameContext g;
-static constexpr int kTotalMaps = 3;
+static constexpr int kTotalMaps = 4;
 static const char *kMapSequence[kTotalMaps] = {
+    "maps/mapTestes.txt",
     "maps/map1.txt",
     "maps/map2.txt",
     "maps/map3.txt"};
@@ -107,6 +108,69 @@ static bool playerOnMapTile(char tileId)
     return data[tz][tx] == tileId;
 }
 
+static bool playerNearKeyForPickupPrompt()
+{
+    if (g.player.hasKey)
+        return false;
+
+    const auto &items = gLevel.items;
+    for (const auto &item : items)
+    {
+        if (!item.active || item.type != ITEM_KEY)
+            continue;
+
+        float dx = camX - item.x;
+        float dz = camZ - item.z;
+        if (dx * dx + dz * dz <= 2.25f)
+            return true;
+    }
+    return false;
+}
+
+static bool playerNearDoorForPrompt()
+{
+    const auto &data = gLevel.map.data();
+    if (data.empty())
+        return false;
+
+    const float tile = gLevel.metrics.tile;
+    const float offX = gLevel.metrics.offsetX;
+    const float offZ = gLevel.metrics.offsetZ;
+    const int tx0 = (int)((camX - offX) / tile);
+    const int tz0 = (int)((camZ - offZ) / tile);
+
+    for (int dz = -1; dz <= 1; ++dz)
+    {
+        for (int dx = -1; dx <= 1; ++dx)
+        {
+            const int tx = tx0 + dx;
+            const int tz = tz0 + dz;
+            if (tz < 0 || tz >= (int)data.size())
+                continue;
+            if (tx < 0 || tx >= (int)data[tz].size())
+                continue;
+            if (data[tz][tx] != 'D')
+                continue;
+
+            float wx, wz;
+            gLevel.metrics.tileCenter(tx, tz, wx, wz);
+            float half = tile * 0.5f;
+            float minX = wx - half;
+            float maxX = wx + half;
+            float minZ = wz - half;
+            float maxZ = wz + half;
+
+            float cx = std::fmax(minX, std::fmin(camX, maxX));
+            float cz = std::fmax(minZ, std::fmin(camZ, maxZ));
+            float ddx = camX - cx;
+            float ddz = camZ - cz;
+            if (ddx * ddx + ddz * ddz <= (1.8f * 1.8f))
+                return true;
+        }
+    }
+    return false;
+}
+
 // --- INIT ---
 bool gameInit(const char *mapPath)
 {
@@ -142,7 +206,7 @@ bool gameInit(const char *mapPath)
     g.r.texEndBG = gAssets.texEndBG;
 
     gHudTex.texHudFundo = gAssets.texHudFundo;
-    gHudTex.texHealthHudIcon = gAssets.texHudFundo;
+    gHudTex.texHealthHudIcon = gAssets.texHpHUD;
     gHudTex.texStaminaHudIcon = gAssets.texStaminaHUD;
     gHudTex.texKeyIcon = gAssets.texKey;
     gHudTex.texGunHUD = gAssets.texGunHUD;
@@ -314,6 +378,9 @@ void gameRender()
     hs.playerHealth = g.player.health;
     hs.playerStamina = (int)g.player.stamina;
     hs.hasKey = g.player.hasKey;
+    hs.showKeyPickupPrompt = playerNearKeyForPickupPrompt();
+    hs.showDoorPrompt = playerNearDoorForPrompt();
+    hs.canUnlockDoor = hs.showDoorPrompt && g.player.hasKey;
     hs.isMoving = (keyW || keyA || keyS || keyD);
     hs.isSprinting = hs.isMoving && keyShift && (g.player.stamina > 0.0f);
     hs.gameTime = g.time;

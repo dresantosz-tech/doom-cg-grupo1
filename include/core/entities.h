@@ -5,8 +5,8 @@ void updateEntities(float dt);
 void playerTryInteract();
 
 // Configurações da IA
-const float ENEMY_SPEED = 2.5f;
-const float ENEMY_VIEW_DIST = 15.0f;
+const float ENEMY_SPEED = 5.0f;
+const float ENEMY_VIEW_DIST = 25.0f;
 const float ENEMY_ATTACK_DIST = 1.5f;
 
 enum EnemyState

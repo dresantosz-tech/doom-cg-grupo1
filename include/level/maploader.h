@@ -9,6 +9,7 @@ public:
     bool load(const char* filename);
 
     const std::vector<std::string>& data() const { return mapData; }
+    bool setTile(int x, int z, char c);
 
     int getWidth() const { return width; }
     int getHeight() const { return height; }

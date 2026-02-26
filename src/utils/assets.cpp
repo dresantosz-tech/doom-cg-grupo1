@@ -66,7 +66,8 @@ bool loadAssets(GameAssets &a)
     a.texSkydome3 = carregaTextura("assets/lastMap_bg.png");
 
     a.texGunHUD = a.texGunDefault;
-    a.texHudFundo = carregaTextura("assets/hp-HUD.png");
+    a.texHudFundo = carregaTextura("assets/hud_bg.png");
+    a.texHpHUD = carregaTextura("assets/hp-HUD.png");
     a.texStaminaHUD = carregaTextura("assets/stamina-HUD.png");
 
     if (!a.texChao1 || !a.texChao2 || !a.texChao3 || !a.texChao4 || !a.texParede1 || 
@@ -76,7 +77,7 @@ bool loadAssets(GameAssets &a)
         !a.texDamage || !a.texKey || !a.texHealthOverlay || !a.texEnemies[0] ||
         !a.texEnemiesRage[0] || !a.texEnemiesDamage[0] || !a.texEnemies[1] ||
         !a.texEnemiesRage[1] || !a.texEnemiesDamage[1] || !a.texEnemies[2] ||
-        !a.texEnemiesRage[2] || !a.texEnemiesDamage[2] || !a.texGunHUD || !a.texHudFundo || !a.texMenuBG || !a.texEndBG ||
+        !a.texEnemiesRage[2] || !a.texEnemiesDamage[2] || !a.texGunHUD || !a.texHudFundo || !a.texHpHUD || !a.texMenuBG || !a.texEndBG ||
         !a.progExit)
     {
         std::printf("ERRO: falha ao carregar algum asset (textura/shader).\n");
