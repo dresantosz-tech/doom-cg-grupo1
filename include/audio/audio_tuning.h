@@ -34,7 +34,7 @@ namespace AudioTuning
     static constexpr float LAVA_GAIN = 0.85f;
 
     // ===== Inimigos 3D (loop base) =====
-    static constexpr float ENEMY_BASE_GAIN = 0.75f; // ganho base do loop do inimigo
+    static constexpr float ENEMY_BASE_GAIN = 1.0f; // ganho base do loop do inimigo
 
     // Atenuação (quanto dá pra ouvir e quão rápido cai)
     // refDist: até aqui fica "normal"

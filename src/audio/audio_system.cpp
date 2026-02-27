@@ -191,6 +191,13 @@ void audioInit(AudioSystem& a, const Level& level) {
     a.bufEnemy = a.engine.loadWav("assets/audio/enemy_mono.wav");
     if (!a.bufEnemy) a.bufEnemy = a.engine.loadWav("assets/audio/enemy.wav");
 
+    // ===== NOVO: sons específicos por tipo =====
+    a.bufEnemyType[0] = a.engine.loadWav("assets/audio/encounter_E.wav");
+    a.bufEnemyType[1] = a.engine.loadWav("assets/audio/encounter_F.wav");
+    a.bufEnemyType[2] = a.engine.loadWav("assets/audio/encounter_G.wav");
+    a.bufEnemyType[3] = a.engine.loadWav("assets/audio/encounter_I.wav");
+    a.bufEnemyType[4] = a.engine.loadWav("assets/audio/encounter_J.wav");
+
     a.bufReload = a.engine.loadWav("assets/audio/reload_mono.wav");
     if (!a.bufReload) a.bufReload = a.engine.loadWav("assets/audio/reload.wav");
 
