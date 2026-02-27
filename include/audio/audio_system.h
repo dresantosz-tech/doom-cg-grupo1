@@ -35,6 +35,10 @@ struct AudioSystem {
     ALuint bufGrunt = 0;
 
     ALuint bufEnemy = 0;
+
+    // Buffers por tipo de inimigo (novo)
+    ALuint bufEnemyType[256] = {0};
+
     ALuint bufEnemyScream = 0;
 
     // Sources

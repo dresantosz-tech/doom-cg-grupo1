@@ -83,16 +83,30 @@ static bool nearestLava(const Level& level, float px, float pz, float& outX, flo
 
 // Cria/atualiza arrays de sources de inimigos conforme quantidade no level
 static void ensureEnemySources(AudioSystem& a, const Level& level) {
-    if (!a.ok || a.bufEnemy == 0) return;
+    if (!a.ok) return;
 
     const size_t need = level.enemies.size();
     if (a.srcEnemies.size() == need) return;
 
-    for (ALuint s : a.srcEnemies) stopIf(s, a.engine);
+    for (ALuint s : a.srcEnemies)
+        stopIf(s, a.engine);
+
     a.srcEnemies.assign(need, 0);
 
     for (size_t i = 0; i < need; ++i) {
-        ALuint s = a.engine.createSource(a.bufEnemy, true);
+        
+        int type = level.enemies[i].type;
+
+        ALuint chosenBuf = a.bufEnemyType[type];
+
+        // Fallback para o som padrão se não existir
+        if (!chosenBuf)
+            chosenBuf = a.bufEnemy;
+
+        if (!chosenBuf)
+            continue;
+
+        ALuint s = a.engine.createSource(chosenBuf, true);
         if (!s) continue;
 
         alSourcei(s, AL_SOURCE_RELATIVE, AL_FALSE);

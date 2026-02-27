@@ -12,7 +12,7 @@ bool loadAssets(GameAssets &a)
     a.texChao1 = carregaTextura("assets/firstMapGround.png");
     a.texChao2 = carregaTextura("assets/secondMapGround.png");
     a.texChao3 = carregaTextura("assets/lastMapGround.png");
-    a.texChao4 = carregaTextura("assets/lastMapGround2.png");
+    // a.texChao4 = carregaTextura("assets/lastMapGround2.png");
     a.texParede1 = carregaTextura("assets/firstMapWall.png");
     a.texParede2 = carregaTextura("assets/secondMapWall.png");
     a.texParede3 = carregaTextura("assets/lastMapWall.png");
