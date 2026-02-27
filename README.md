@@ -134,6 +134,7 @@ Os itens também são definidos diretamente no mapa e funcionam como pontos de s
 |----------|-----|-----------|
 | `H` | Health | Recupera vida do jogador |
 | `K` | Key | Chave para desbloquear porta |
+| `C` | Companion | Companheiro coletável escondido no mapa |
 
 - não geram geometria,
 - não bloqueiam passagem,
