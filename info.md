@@ -45,5 +45,5 @@
 |S| saída da fase|
 |P| posição inicial do jogador (spawn)|
 |E| Interage para coletar a chave e/ou abrir a porta|
-
+|C| Companheiro Coletável
 ---

@@ -137,7 +137,7 @@ void updateEntities(float dt)
 
         if (dx * dx + dz * dz < 1.0f)
         {
-            if (item.type == ITEM_KEY)
+            if (item.type == ITEM_KEY || item.type == ITEM_COMPANION)
                 continue;
 
             item.active = false;
@@ -165,7 +165,7 @@ void playerTryInteract()
 
     for (auto &item : lvl.items)
     {
-        if (!item.active || item.type != ITEM_KEY)
+        if (!item.active)
             continue;
 
         float dx = camX - item.x;
@@ -173,10 +173,21 @@ void playerTryInteract()
         if (dx * dx + dz * dz > 2.25f) // raio de interacao ~= 1.5
             continue;
 
-        item.active = false;
-        item.respawnTimer = 999999.0f;
-        g.player.hasKey = true;
-        break;
+        if (item.type == ITEM_KEY)
+        {
+            item.active = false;
+            item.respawnTimer = 999999.0f;
+            g.player.hasKey = true;
+            break;
+        }
+
+        if (item.type == ITEM_COMPANION)
+        {
+            item.active = false;
+            item.respawnTimer = 999999.0f;
+            g.player.hasCompanion = true;
+            break;
+        }
     }
 
     // Interacao com porta: se tiver chave e estiver perto de um tile 'D',

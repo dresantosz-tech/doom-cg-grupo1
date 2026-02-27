@@ -5,7 +5,7 @@ void updateEntities(float dt);
 void playerTryInteract();
 
 // Configurações da IA
-const float ENEMY_SPEED = 5.0f;
+const float ENEMY_SPEED = 9.0f;
 const float ENEMY_VIEW_DIST = 25.0f;
 const float ENEMY_ATTACK_DIST = 1.5f;
 
@@ -42,7 +42,8 @@ enum ItemType
     ITEM_HEALTH,
     ITEM_AMMO,
     ITEM_AMMO_BOX,
-    ITEM_KEY
+    ITEM_KEY,
+    ITEM_COMPANION
 };
 
 struct Item

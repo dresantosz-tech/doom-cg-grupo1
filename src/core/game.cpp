@@ -127,6 +127,25 @@ static bool playerNearKeyForPickupPrompt()
     return false;
 }
 
+static bool playerNearCompanionForPickupPrompt()
+{
+    if (g.player.hasCompanion)
+        return false;
+
+    const auto &items = gLevel.items;
+    for (const auto &item : items)
+    {
+        if (!item.active || item.type != ITEM_COMPANION)
+            continue;
+
+        float dx = camX - item.x;
+        float dz = camZ - item.z;
+        if (dx * dx + dz * dz <= 2.25f)
+            return true;
+    }
+    return false;
+}
+
 static bool playerNearDoorForPrompt()
 {
     const auto &data = gLevel.map.data();
@@ -204,6 +223,7 @@ bool gameInit(const char *mapPath)
     g.r.texSkydome3 = gAssets.texSkydome3;
     g.r.texMenuBG = gAssets.texMenuBG;
     g.r.texEndBG = gAssets.texEndBG;
+    g.r.texDeathBG = gAssets.texDeathBG;
 
     gHudTex.texHudFundo = gAssets.texHudFundo;
     gHudTex.texHealthHudIcon = gAssets.texHpHUD;
@@ -230,6 +250,7 @@ bool gameInit(const char *mapPath)
 
     g.r.texHealth = gAssets.texHealth;
     g.r.texAmmo = gAssets.texKey;
+    g.r.texCompanion = gAssets.texTux;
 
     g.r.progSangue = gAssets.progSangue;
     g.r.progLava = gAssets.progLava;
@@ -266,6 +287,7 @@ void gameReset()
     g.player.health = 100;
     g.player.stamina = 100.0f;
     g.player.hasKey = false;
+    g.player.hasCompanion = false;
 
     g.player.damageAlpha = 0.0f;
     g.player.healthAlpha = 0.0f;
@@ -380,6 +402,7 @@ void gameRender()
     hs.playerStamina = (int)g.player.stamina;
     hs.hasKey = g.player.hasKey;
     hs.showKeyPickupPrompt = playerNearKeyForPickupPrompt();
+    hs.showCompanionPickupPrompt = playerNearCompanionForPickupPrompt();
     hs.showDoorPrompt = playerNearDoorForPrompt();
     hs.canUnlockDoor = hs.showDoorPrompt && g.player.hasKey;
     hs.isMoving = (keyW || keyA || keyS || keyD);
@@ -387,6 +410,24 @@ void gameRender()
     hs.gameTime = g.time;
     hs.damageAlpha = g.player.damageAlpha;
     hs.healthAlpha = g.player.healthAlpha;
+
+    // Troca da mao principal ao coletar o companion ('C')
+    if (g.player.hasCompanion)
+    {
+        gHudTex.texGunDefault = gAssets.texHandWithFunny;
+        gHudTex.texGunFire1 = gAssets.texHandWithFunny;
+        gHudTex.texGunFire2 = gAssets.texHandWithFunny;
+        gHudTex.texGunReload1 = gAssets.texHandWithFunny;
+        gHudTex.texGunReload2 = gAssets.texHandWithFunny;
+    }
+    else
+    {
+        gHudTex.texGunDefault = gAssets.texGunDefault;
+        gHudTex.texGunFire1 = gAssets.texGunFire1;
+        gHudTex.texGunFire2 = gAssets.texGunFire2;
+        gHudTex.texGunReload1 = gAssets.texGunReload1;
+        gHudTex.texGunReload2 = gAssets.texGunReload2;
+    }
 
     // --- ESTADO: MENU INICIAL ---
     if (g.state == GameState::MENU_INICIAL)
@@ -404,7 +445,9 @@ void gameRender()
         // menuMeltRenderOverlay(janelaW, janelaH, g.time);
 
         // Tela do game over por cima (com fogo)
-        menuRender(janelaW, janelaH, g.time, "GAME OVER", "Pressione ENTER para Reiniciar", g.r);
+        RenderAssets deathScreen = g.r;
+        deathScreen.texMenuBG = g.r.texDeathBG;
+        menuRender(janelaW, janelaH, g.time, "GAME OVER", "Pressione ENTER para Reiniciar", deathScreen);
     }
     // --- ESTADO: VITORIA ---
     else if (g.state == GameState::VITORIA)

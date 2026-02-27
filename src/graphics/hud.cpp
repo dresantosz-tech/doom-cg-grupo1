@@ -186,6 +186,45 @@ static void drawKeyPickupPrompt(int w, int h, bool showPrompt)
     end2D();
 }
 
+static void drawCompanionPickupPrompt(int w, int h, bool showPrompt)
+{
+    if (!showPrompt)
+        return;
+
+    const char *msg = "Pressione E para obter companheiro foda";
+    const float textScale = 0.20f;
+    const float textW = uiStrokeTextWidthScaled(msg, textScale);
+    const float panelPadX = 20.0f;
+    const float panelPadY = 12.0f;
+    const float panelH = 46.0f;
+    const float panelW = textW + panelPadX * 2.0f;
+    const float panelX = (w - panelW) * 0.5f;
+    const float panelY = h * 0.10f;
+
+    begin2D(w, h);
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glColor4f(0.0f, 0.0f, 0.0f, 0.60f);
+    glBegin(GL_QUADS);
+    glVertex2f(panelX, panelY);
+    glVertex2f(panelX + panelW, panelY);
+    glVertex2f(panelX + panelW, panelY + panelH);
+    glVertex2f(panelX, panelY + panelH);
+    glEnd();
+
+    glColor3f(0.55f, 1.0f, 0.55f);
+    uiDrawStrokeText(panelX + panelPadX, panelY + panelPadY, msg, textScale);
+
+    glDisable(GL_BLEND);
+
+    end2D();
+}
+
 static void drawDoorPrompt(int w, int h, bool showPrompt, bool canUnlock)
 {
     if (!showPrompt)
@@ -556,6 +595,7 @@ void hudRenderAll(
     if (showDoomBar) drawDoomBar(screenW, screenH, tex, state);
     drawKeyIndicatorTopRight(screenW, screenH, tex.texKeyIcon, tex.texNoKeyIcon, state.hasKey);
     drawKeyPickupPrompt(screenW, screenH, state.showKeyPickupPrompt);
+    drawCompanionPickupPrompt(screenW, screenH, state.showCompanionPickupPrompt);
     drawDoorPrompt(screenW, screenH, state.showDoorPrompt, state.canUnlockDoor);
 
     (void)showCrosshair;

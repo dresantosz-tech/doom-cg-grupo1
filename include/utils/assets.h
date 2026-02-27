@@ -6,6 +6,7 @@ struct GameAssets
     // texturas
     GLuint texMenuBG = 0;
     GLuint texEndBG = 0;
+    GLuint texDeathBG = 0;
     GLuint texPorta = 0;
     GLuint texChao1 = 0;
     GLuint texChao2 = 0;
@@ -36,6 +37,8 @@ struct GameAssets
     GLuint texHpHUD = 0;
     GLuint texStaminaHUD = 0;
     GLuint texHandHUD = 0;
+    GLuint texHandWithFunny = 0;
+    GLuint texTux = 0;
 
     GLuint texEnemies[5]       = {0, 0, 0, 0, 0};
     GLuint texEnemiesRage[5]   = {0, 0, 0, 0, 0};

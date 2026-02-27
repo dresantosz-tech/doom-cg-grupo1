@@ -531,6 +531,8 @@ void drawEntities(const std::vector<Enemy> &enemies, const std::vector<Item> &it
             drawSprite(item.x, item.z, 0.7f, 0.7f, r.texHealth, camX, camZ);
         else if (item.type == ITEM_AMMO || item.type == ITEM_KEY)
             drawSprite(item.x, item.z, 0.7f, 0.7f, r.texAmmo, camX, camZ);
+        else if (item.type == ITEM_COMPANION)
+            drawSprite(item.x, item.z, 0.7f, 0.7f, r.texCompanion, camX, camZ);
     }
 
     // --- INIMIGOS ---

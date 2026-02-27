@@ -1,6 +1,6 @@
 ZZZZZZZZZZZZZZZZZZZZZZZZ
-ZP....Z.......Z......SZ
-Z.ZZZ.Z.ZZZZZ.Z.ZZZZZZZ
+ZP....ZHH.JJJ........SZ
+Z.ZZZ.ZZZZZZZ.Z.ZZZZZZZ
 Z.....Z.....Z.Z.......Z
 Z.ZZZZZ.ZZZ.Z.ZZZZZZZ.Z
 Z.....Z...Z.Z.......Z.Z
@@ -10,10 +10,10 @@ Z.Z.ZZZZZZZZZ.ZZZ.Z.Z.Z
 Z.Z.......Z...Z...Z.Z.Z
 Z.Z.ZZZZZ.Z.ZZZ.ZZZ.Z.Z
 Z.Z.....Z.Z.....Z...Z.Z
-Z.ZZZZZ.Z.ZZZZZZZ.ZZZ.Z
+ZZZZZZZ.Z.ZZZZZZZ.ZZZ.Z
 Z...H...Z...F.....Z...Z
 Z.ZZZZZZZZZ.ZZZZZ.Z.Z.Z
-Z.......E...Z.....Z.Z.Z
+Z.......E...Z.......Z.Z
 Z.ZZZZZZZZZZZZZ.ZZZ.Z.Z
-Z.......G...........Z.Z
+Z.......G.......ZH..ZHZ
 ZZZZZZZZZZZZZZZZZZZZZZZZ

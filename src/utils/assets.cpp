@@ -7,6 +7,7 @@ bool loadAssets(GameAssets &a)
 {
     a.texMenuBG = carregaTextura("assets/menu_bg.png");
     a.texEndBG = carregaTextura("assets/end_bg.png");
+    a.texDeathBG = carregaTextura("assets/death_bg.png");
     a.texPorta= carregaTextura("assets/finalDoor.png");
     a.texChao1 = carregaTextura("assets/firstMapGround.png");
     a.texChao2 = carregaTextura("assets/secondMapGround.png");
@@ -70,6 +71,8 @@ bool loadAssets(GameAssets &a)
     a.texHpHUD = carregaTextura("assets/hp-HUD.png");
     a.texStaminaHUD = carregaTextura("assets/stamina-HUD.png");
     a.texHandHUD = carregaTextura("assets/hand-HUD.JPG");
+    a.texHandWithFunny = carregaTextura("assets/handWithFunny.png");
+    a.texTux = carregaTextura("assets/tux.png");
 
     if (!a.texChao1 || !a.texChao2 || !a.texChao3 || !a.texChao4 || !a.texParede1 || 
         !a.texParede2 || !a.texParede3 || !a.texSangue || !a.texLava || !a.progSangue ||
@@ -78,7 +81,7 @@ bool loadAssets(GameAssets &a)
         !a.texDamage || !a.texKey || !a.texHealthOverlay || !a.texEnemies[0] ||
         !a.texEnemiesRage[0] || !a.texEnemiesDamage[0] || !a.texEnemies[1] ||
         !a.texEnemiesRage[1] || !a.texEnemiesDamage[1] || !a.texEnemies[2] ||
-        !a.texEnemiesRage[2] || !a.texEnemiesDamage[2] || !a.texGunHUD || !a.texHudFundo || !a.texHpHUD || !a.texStaminaHUD || !a.texHandHUD || !a.texMenuBG || !a.texEndBG ||
+        !a.texEnemiesRage[2] || !a.texEnemiesDamage[2] || !a.texGunHUD || !a.texHudFundo || !a.texHpHUD || !a.texStaminaHUD || !a.texHandHUD || !a.texHandWithFunny || !a.texTux || !a.texMenuBG || !a.texEndBG || !a.texDeathBG ||
         !a.progExit)
     {
         std::printf("ERRO: falha ao carregar algum asset (textura/shader).\n");

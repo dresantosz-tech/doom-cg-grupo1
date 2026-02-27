@@ -29,6 +29,7 @@ struct HudState
     int playerStamina = 100;
     bool hasKey = false;
     bool showKeyPickupPrompt = false;
+    bool showCompanionPickupPrompt = false;
     bool showDoorPrompt = false;
     bool canUnlockDoor = false;
     bool isMoving = false;
